@@ -1,8 +1,0 @@
-LOC 6
-DATA 10
-DATA 3
-DATA End
-LDR 3,0,10 ; R3 gets 12
-JZ 0,1,0
-LOC 1024
-End: HLT
