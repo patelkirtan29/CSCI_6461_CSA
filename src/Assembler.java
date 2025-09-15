@@ -6,12 +6,11 @@ public class Assembler {
     private Map<Integer, Integer> memory = new LinkedHashMap<>();   // address → machine code
     private int locationCounter = 0;
 
-    // -------- Opcode Table (from your ISA PDF) --------
+    // -------- Opcode Table (from ISA PDF) --------
     private static final Map<String, Integer> OPCODES = new HashMap<>();
     static {
         // Miscellaneous
         OPCODES.put("HLT", 0b000000);
-        OPCODES.put("TRAP", 0b011000); // not needed until Part III
 
         // Load / Store
         OPCODES.put("LDR", 0b000001);
@@ -52,8 +51,6 @@ public class Assembler {
         OPCODES.put("IN",  0b110001);
         OPCODES.put("OUT", 0b110010);
         OPCODES.put("CHK", 0b110011);
-
-        // Floating point / vector (not needed until Part IV)
     }
 
     // -------- Pass 1: Build Symbol Table --------
@@ -175,18 +172,23 @@ public class Assembler {
     }
 
     // -------- Write Output Files --------
-    private void writeOutputFiles(String listingFile, String loadFile) throws IOException {
+    private void writeOutputFiles(String listingFile, String loadFile, List<String> source) throws IOException {
         try (PrintWriter listOut = new PrintWriter(new FileWriter(listingFile));
              PrintWriter loadOut = new PrintWriter(new FileWriter(loadFile))) {
 
+            int index = 0;
             for (Map.Entry<Integer, Integer> entry : memory.entrySet()) {
                 int addr = entry.getKey();
                 int value = entry.getValue();
 
-                // Listing file
-                listOut.printf("%06o %06o\n", addr, value);
+                // source line for listing (guard against out-of-bounds)
+                String srcLine = (index < source.size()) ? source.get(index) : "";
+                index++;
 
-                // Load file
+                // Listing: octal + source
+                listOut.printf("%06o %06o %-20s\n", addr, value, srcLine);
+
+                // Load: only octal
                 loadOut.printf("%06o %06o\n", addr, value);
             }
         }
@@ -213,7 +215,7 @@ public class Assembler {
         assembler.pass1(lines);
         assembler.pass2(lines);
 
-        assembler.writeOutputFiles("listing.txt", "load.txt");
+        assembler.writeOutputFiles("listing.txt", "load.txt", lines);
         System.out.println("Assembly complete! Check listing.txt and load.txt");
     }
 }
