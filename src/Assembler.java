@@ -173,6 +173,9 @@ public class Assembler {
 
     // -------- Write Output Files --------
     private void writeOutputFiles(String listingFile, String loadFile, List<String> source) throws IOException {
+        new File(listingFile).getParentFile().mkdirs();
+        new File(loadFile).getParentFile().mkdirs();
+
         try (PrintWriter listOut = new PrintWriter(new FileWriter(listingFile));
              PrintWriter loadOut = new PrintWriter(new FileWriter(loadFile))) {
 
@@ -215,7 +218,7 @@ public class Assembler {
         assembler.pass1(lines);
         assembler.pass2(lines);
 
-        assembler.writeOutputFiles("listing.txt", "load.txt", lines);
+        assembler.writeOutputFiles("generated/listing.txt", "generated/load.txt", lines);
         System.out.println("Assembly complete! Check listing.txt and load.txt");
     }
 }
