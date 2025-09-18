@@ -3,7 +3,19 @@ import java.util.*;
 
 public class Assembler {
     private Map<String, Integer> symbolTable = new HashMap<>();     // labels → addresses
-    private Map<Integer, Integer> memory = new LinkedHashMap<>();   // address → machine code
+
+    // store both machine value and original source line
+    class MemEntry {
+        int value;
+        String sourceLine;
+
+        MemEntry(int value, String sourceLine) {
+            this.value = value;
+            this.sourceLine = sourceLine;
+        }
+    }
+
+    private Map<Integer, MemEntry> memory = new LinkedHashMap<>(); // address → machine code
     private int locationCounter = 0;
 
     // -------- Opcode Table (from ISA PDF) --------
@@ -67,7 +79,8 @@ public class Assembler {
 
             if ("LOC".equalsIgnoreCase(instr.opcode)) {
                 locationCounter = Integer.parseInt(instr.operands[0]);
-            } else {
+                // LOC doesn't take up memory space, just changes location counter
+            } else if (instr.opcode != null && !instr.opcode.isEmpty()) {
                 locationCounter++; // every DATA or instruction occupies memory
             }
         }
@@ -82,18 +95,20 @@ public class Assembler {
 
             if ("LOC".equalsIgnoreCase(instr.opcode)) {
                 locationCounter = Integer.parseInt(instr.operands[0]);
+                // LOC doesn't generate machine code, just changes location counter
             } else if ("DATA".equalsIgnoreCase(instr.opcode)) {
                 int value;
-                if (symbolTable.containsKey(instr.operands[0])) {
-                    value = symbolTable.get(instr.operands[0]);
+                String operand = instr.operands[0];
+                if (symbolTable.containsKey(operand)) {
+                    value = symbolTable.get(operand);
                 } else {
-                    value = Integer.parseInt(instr.operands[0]);
+                    value = Integer.parseInt(operand);
                 }
-                memory.put(locationCounter, value);
+                memory.put(locationCounter, new MemEntry(value, line));
                 locationCounter++;
-            } else { // real instruction
+            } else if (instr.opcode != null && !instr.opcode.isEmpty()) { // real instruction
                 int code = assembleInstruction(instr);
-                memory.put(locationCounter, code);
+                memory.put(locationCounter, new MemEntry(code, line));
                 locationCounter++;
             }
         }
@@ -107,25 +122,54 @@ public class Assembler {
             throw new IllegalArgumentException("Unknown opcode: " + opcode);
         }
 
+        // Special handling for SRC / RRC
+        if (opcode.equals("SRC") || opcode.equals("RRC")) {
+            // Ensure we have exactly 4 operands
+            if (instr.operands.length != 4) {
+                throw new IllegalArgumentException(opcode + " requires exactly 4 operands: register, count, L/R, A/L");
+            }
+            
+            int r = parseOperand(instr.operands[0]);       // register
+            int count = parseOperand(instr.operands[1]);   // shift/rotate count
+            int lr = parseOperand(instr.operands[2]);      // L/R bit
+            int al = parseOperand(instr.operands[3]);      // A/L bit
+
+            // Validate ranges
+            if (r < 0 || r > 3) throw new IllegalArgumentException("Register must be 0-3");
+            if (count < 0 || count > 15) throw new IllegalArgumentException("Count must be 0-15 for " + opcode);
+            if (lr < 0 || lr > 1) throw new IllegalArgumentException("L/R bit must be 0 or 1");
+            if (al < 0 || al > 1) throw new IllegalArgumentException("A/L bit must be 0 or 1");
+
+            int instruction = 0;
+            instruction |= (opcodeBits & 0x3F) << 10;  // opcode (6 bits)
+            instruction |= (r & 0x03) << 8;            // register (2 bits)
+            instruction |= (al & 0x01) << 7;           // A/L (1 bit) - bit 7
+            instruction |= (lr & 0x01) << 6;           // L/R (1 bit) - bit 6  
+            instruction |= (count & 0x0F);             // count (4 bits) - bits 3-0
+
+            return instruction;
+        }
+
+        // Default path (for other instructions)
         int r = 0, ix = 0, address = 0, i = 0;
 
         if (instr.operands.length > 0 && !instr.operands[0].isEmpty())
-            r = Integer.parseInt(instr.operands[0]);
+            r = parseOperand(instr.operands[0]);
 
         if (instr.operands.length > 1 && !instr.operands[1].isEmpty())
-            ix = Integer.parseInt(instr.operands[1]);
+            ix = parseOperand(instr.operands[1]);
 
         if (instr.operands.length > 2 && !instr.operands[2].isEmpty()) {
             String addr = instr.operands[2];
             if (symbolTable.containsKey(addr)) {
                 address = symbolTable.get(addr);
             } else {
-                address = Integer.parseInt(addr);
+                address = parseOperand(addr);
             }
         }
 
         if (instr.operands.length > 3 && !instr.operands[3].isEmpty())
-            i = Integer.parseInt(instr.operands[3]);
+            i = parseOperand(instr.operands[3]);
 
         int instruction = 0;
         instruction |= (opcodeBits & 0x3F) << 10; // 6 bits
@@ -135,6 +179,18 @@ public class Assembler {
         instruction |= (address & 0x1F);          // 5 bits
 
         return instruction;
+    }
+
+    // Helper method to parse operand as integer
+    private int parseOperand(String operand) {
+        if (operand == null || operand.trim().isEmpty()) {
+            return 0;
+        }
+        operand = operand.trim();
+        if (symbolTable.containsKey(operand)) {
+            return symbolTable.get(operand);
+        }
+        return Integer.parseInt(operand);
     }
 
     // -------- Parse One Line --------
@@ -161,9 +217,11 @@ public class Assembler {
             String[] parts = line.split("\\s+", 2);
             opcode = parts[0].trim();
             if (parts.length > 1) {
-                operands = parts[1].split(",");
-                for (int j = 0; j < operands.length; j++) {
-                    operands[j] = operands[j].trim();
+                // Split by comma and trim each operand
+                String[] rawOperands = parts[1].split(",");
+                operands = new String[rawOperands.length];
+                for (int j = 0; j < rawOperands.length; j++) {
+                    operands[j] = rawOperands[j].trim();
                 }
             }
         }
@@ -179,20 +237,15 @@ public class Assembler {
         try (PrintWriter listOut = new PrintWriter(new FileWriter(listingFile));
              PrintWriter loadOut = new PrintWriter(new FileWriter(loadFile))) {
 
-            int index = 0;
-            for (Map.Entry<Integer, Integer> entry : memory.entrySet()) {
+            for (Map.Entry<Integer, MemEntry> entry : memory.entrySet()) {
                 int addr = entry.getKey();
-                int value = entry.getValue();
+                MemEntry mem = entry.getValue();
 
-                // source line for listing (guard against out-of-bounds)
-                String srcLine = (index < source.size()) ? source.get(index) : "";
-                index++;
-
-                // Listing: octal + source
-                listOut.printf("%06o %06o %-20s\n", addr, value, srcLine);
+                // Listing: octal + original source
+                listOut.printf("%06o %06o %s\n", addr, mem.value, mem.sourceLine);
 
                 // Load: only octal
-                loadOut.printf("%06o %06o\n", addr, value);
+                loadOut.printf("%06o %06o\n", addr, mem.value);
             }
         }
     }

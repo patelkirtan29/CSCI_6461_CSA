@@ -1,0 +1,5 @@
+000000 006024 START:  LDA 0,0,VALUE      ; Load VALUE into R0
+000001 062003         SRC 0,3,0,0        ; Shift R0 left by 3 (logical)
+000002 064302         RRC 0,2,1,1        ; Rotate R0 right by 2 (circular)
+000003 000000         HLT                ; Stop execution
+000024 000031 VALUE: DATA 25             ; Initial value = 25
