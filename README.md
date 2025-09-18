@@ -11,15 +11,15 @@ This repository contains a Java implementation of an assembler and a simulator f
 ### Commands to run the project
 
 #### To Compile the project 
-javac -d bin/classes src/main/java/com/gwu/assembler/*.java
+- javac -d bin/classes src/main/java/com/gwu/assembler/*.java
 
 #### To run the binary files
-java -cp bin/classes com.gwu.assembler.Assembler
+- java -cp bin/classes com.gwu.assembler.Assembler
 
 #### To run a specific file
 java -cp bin/classes com.gwu.assembler.Assembler 1
-pass 1 -> Shift Rotate
-pass 2 -> I/O Operations
-pass 3 -> Arithmetic Operations
-pass 4 -> Load Store Opertaions (Memory to Register)
-default -> Load Store Operations (Register to Register)
+- pass 1 -> Shift Rotate
+- pass 2 -> I/O Operations
+- pass 3 -> Arithmetic Operations
+- pass 4 -> Load Store Opertaions (Memory to Register)
+- default -> Load Store Operations (Register to Register)
