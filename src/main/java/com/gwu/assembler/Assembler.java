@@ -109,6 +109,11 @@ public class Assembler {
             throw new IllegalArgumentException("Unknown opcode: " + opcode);
         }
 
+        // Special handling for I/O Operations
+        if (opcode.equals("IN") || opcode.equals("OUT") || opcode.equals("CHK")) {
+            return assembleIOInstruction(instr);
+        }
+
         // Special handling for SRC / RRC
         if (opcode.equals("SRC") || opcode.equals("RRC")) {
             // Ensure we have exactly 4 operands
@@ -142,24 +147,59 @@ public class Assembler {
         }
 
         int r = 0, ix = 0, address = 0, i = 0;
-
-        if (instr.operands.length > 0 && !instr.operands[0].isEmpty())
-            r = Integer.parseInt(instr.operands[0]);
-
-        if (instr.operands.length > 1 && !instr.operands[1].isEmpty())
-            ix = Integer.parseInt(instr.operands[1]);
-
-        if (instr.operands.length > 2 && !instr.operands[2].isEmpty()) {
-            String addr = instr.operands[2];
-            if (symbolTable.containsKey(addr)) {
-                address = symbolTable.get(addr);
-            } else {
-                address = Integer.parseInt(addr);
+        
+        // special handling for LDX, STX, JMA, JSR
+        if (opcode.equals("LDX") || opcode.equals("STX") || opcode.equals("STX")
+          || opcode.equals("JMA") || opcode.equals("JSR")) {
+            if (instr.operands.length > 0 && !instr.operands[0].isEmpty())
+                ix = Integer.parseInt(instr.operands[0]);
+            if (instr.operands.length > 1 && !instr.operands[1].isEmpty()) {
+                String addr = instr.operands[1];
+                if (symbolTable.containsKey(addr)) {
+                    address = symbolTable.get(addr);
+                } else {
+                    address = Integer.parseInt(addr);
+                }
             }
         }
-
-        if (instr.operands.length > 3 && !instr.operands[3].isEmpty())
-            i = Integer.parseInt(instr.operands[3]);
+        else if (opcode.equals("RFS")) { // special handling for RFS
+            if (instr.operands.length > 0 && !instr.operands[0].isEmpty()) {
+                String addr = instr.operands[0];
+                if (symbolTable.containsKey(addr)) {
+                    address = symbolTable.get(addr);
+                } else {
+                    address = Integer.parseInt(addr);
+                }
+            }
+        }
+        else if (opcode.equals("AIR") || opcode.equals("SIR")) { // special handling for AIR, SIR
+            if (instr.operands.length > 0 && !instr.operands[0].isEmpty())
+                r = Integer.parseInt(instr.operands[0]);
+            if (instr.operands.length > 1 && !instr.operands[1].isEmpty()) {
+                String addr = instr.operands[1];
+                if (symbolTable.containsKey(addr)) {
+                    address = symbolTable.get(addr);
+                } else {
+                    address = Integer.parseInt(addr);
+                }
+            }
+        }
+        else { // also handles Reg-to-Reg insturctions since r, ix is the same place as rx, ry in the format
+            if (instr.operands.length > 0 && !instr.operands[0].isEmpty())
+                r = Integer.parseInt(instr.operands[0]);
+            if (instr.operands.length > 1 && !instr.operands[1].isEmpty())
+                ix = Integer.parseInt(instr.operands[1]);
+            if (instr.operands.length > 2 && !instr.operands[2].isEmpty()) {
+                String addr = instr.operands[2];
+                if (symbolTable.containsKey(addr)) {
+                    address = symbolTable.get(addr);
+                } else {
+                    address = Integer.parseInt(addr);
+                }
+            }
+            if (instr.operands.length > 3 && !instr.operands[3].isEmpty())
+                i = Integer.parseInt(instr.operands[3]);
+        }
 
         int instruction = 0;
         instruction |= (opcodeBits & 0x3F) << 10; // opcode: 6 bits
@@ -167,6 +207,30 @@ public class Assembler {
         instruction |= (ix & 0x03) << 6; // IX: 2 bits
         instruction |= (i & 0x01) << 5; // I: 1 bit
         instruction |= (address & 0x1F); // address: 5 bits!
+        return instruction;
+    }
+
+    // -------- Assemble IO Instruction
+    private int assembleIOInstruction(Instruction instr) {
+        String opcode = instr.opcode.toUpperCase();
+        if (instr.operands.length != 2) {
+            throw new IllegalArgumentException("There must be two arguments for " + opcode + " operation");
+        }
+
+        int opcodeBits = Opcode.OPCODES.getOrDefault(opcode, -1);
+        int r = Integer.parseInt(instr.operands[0]);
+        int devid = Integer.parseInt(instr.operands[1]);
+        if (r < 0 || r > 3) {
+            throw new IllegalArgumentException("Register must be between 0 and 3");
+        }
+        if (devid > 31) {
+            throw new IllegalArgumentException("DEVID must be between 0 and 31");
+        }
+
+        int instruction = 0;
+        instruction |= (opcodeBits & 0x3F) << 10; // 6 bits
+        instruction |= (r & 0x3) << 8;            // 2 bits
+        instruction |= (devid & 0x1F);            // 5 bits
         return instruction;
     }
 
