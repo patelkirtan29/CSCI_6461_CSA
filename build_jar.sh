@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# create bin and dist folders
+# create bin folders
 mkdir -p bin
 
 # compile Assembler

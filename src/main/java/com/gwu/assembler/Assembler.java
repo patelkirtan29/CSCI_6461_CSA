@@ -302,7 +302,7 @@ public class Assembler {
         String listingFileName;
         List<String> lines = new ArrayList<>();
 
-        if (args.length > 0) {
+        if (args.length == 2 && args[1].equals("test")) {
             int option = Integer.parseInt(args[0]);
             switch (option) {
                 case 1 -> {
@@ -330,16 +330,22 @@ public class Assembler {
                     loadFileName = "resources/output/reg_to_reg_load.txt";
                     listingFileName = "resources/output/reg_to_reg_listing.txt";
                 }
-                default -> {
+                case 6 -> {
                     fileName = "resources/sample.asm";
                     loadFileName = "resources/output/sample_load.txt";
                     listingFileName = "resources/output/sample_listing.txt";
                 }
+                default -> {
+                    throw new IllegalArgumentException("wrong test case");
+                }
             }
-        } else {
-            fileName = "resources/sample.asm";
-            loadFileName = "resources/output/sample_load.txt";
-            listingFileName = "resources/output/sample_listing.txt";
+        } else if (args.length == 1) {
+            fileName = args[0];
+            loadFileName = "generated/load.txt";
+            listingFileName = "generated/listing.txt";
+        }
+        else {
+            throw new IllegalArgumentException("wrong input arguments");
         }
         File sourceFile = new File(fileName);
 

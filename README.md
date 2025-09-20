@@ -3,23 +3,38 @@
 ## Description
 This repository contains a Java implementation of an assembler and a simulator for the Computer System Architecture course (CSCI_6461) at George Washington University. The project converts assembly source files into binary/machine code (assembler) and executes that code in a simulated CPU/memory environment (simulator).
 
-## Getting Started
-
-### Prerequisites
+## Prerequisites
 - Java Development Kit (JDK) 8 or higher
 
-### Commands to run the project
+## Build
+```bash
+# Use build_jar.sh script for compiling and packaging into a JAR file.
+bash build_jar.sh
+```
 
-#### To Compile the project 
-- javac -d bin/classes src/main/java/com/gwu/assembler/*.java
+## Run
+By running the following command, the assembler generates ***"generated"*** folder with ***"listing.txt"*** and ***"load.txt"*** files for given ***<source file>***.
+```bash
+# Example: java -jar Assembler.jar sample.asm
+java -jar Assembler.jar <source file>
+```
 
-#### To run the binary files
-- java -cp bin/classes com.gwu.assembler.Assembler
+## Testing
+There are 6 distinct test files:
+1) Shift/Rotate (***resources/shift_rorate.asm***)
+2) I/O Operations (***resources/IO.asm***)
+3) Arithmetic Operations (***resources/MR_LS.asm***)
+4) Load Store Opertaions (Memory to Register) (***resources/RM_RR_AL.asm***)
+5) Multiply/Divide and Logical Operations (Register to Register) (***resources/reg_to_reg.asm***)
+6) Load Store Opertaions (Memory to Register) (***resources/sample.asm***)
 
-#### To run a specific file
-java -cp bin/classes com.gwu.assembler.Assembler 1
-- pass 1 -> Shift Rotate
-- pass 2 -> I/O Operations
-- pass 3 -> Arithmetic Operations
-- pass 4 -> Load Store Opertaions (Memory to Register)
-- default -> Load Store Operations (Register to Register)
+For testing each of them:
+```bash
+# Example: java -jar Assembler.jar 1 test
+java -jar Assembler.jar <test number> test
+```
+For testing all of them:
+```bash
+bash test.sh
+```
+The listing and load files for tests would be generated in ***resources/output***. The correctness of generated files could be verified by comparing with files in ***resources/reference_output***.
