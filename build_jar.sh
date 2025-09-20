@@ -4,7 +4,7 @@
 mkdir -p bin
 
 # compile Assembler
-javac -d bin src/main/java/com/gwu/assembler/*.java
+javac --release 15 -d bin src/main/java/com/gwu/assembler/*.java
 # create JAR
 jar cfm Assembler.jar manifest.txt -C bin .
 

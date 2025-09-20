@@ -341,8 +341,8 @@ public class Assembler {
             }
         } else if (args.length == 1) {
             fileName = args[0];
-            loadFileName = "generated/load.txt";
-            listingFileName = "generated/listing.txt";
+            loadFileName = "resources/generated/load.txt";
+            listingFileName = "resources/generated/listing.txt";
         }
         else {
             throw new IllegalArgumentException("wrong input arguments");
