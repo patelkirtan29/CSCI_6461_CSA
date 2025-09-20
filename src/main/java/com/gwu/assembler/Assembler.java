@@ -325,16 +325,21 @@ public class Assembler {
                     loadFileName = "resources/output/AL_load.txt";
                     listingFileName = "resources/output/AL_listing.txt";
                 }
+                case 5 -> {
+                    fileName = "resources/reg_to_reg.asm";
+                    loadFileName = "resources/output/reg_to_reg_load.txt";
+                    listingFileName = "resources/output/reg_to_reg_listing.txt";
+                }
                 default -> {
                     fileName = "resources/sample.asm";
-                    loadFileName = "resources/output/load.txt";
-                    listingFileName = "resources/output/listing.txt";
+                    loadFileName = "resources/output/sample_load.txt";
+                    listingFileName = "resources/output/sample_listing.txt";
                 }
             }
         } else {
             fileName = "resources/sample.asm";
-            loadFileName = "resources/output/load.txt";
-            listingFileName = "resources/output/listing.txt";
+            loadFileName = "resources/output/sample_load.txt";
+            listingFileName = "resources/output/sample_listing.txt";
         }
         File sourceFile = new File(fileName);
 
