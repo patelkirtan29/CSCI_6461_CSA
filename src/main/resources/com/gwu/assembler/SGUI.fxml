@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx"
+    xmlns:fx="http://javafx.com/fxml"
+    fx:controller="com.gwu.assembler.SGUI"
+    stylesheets="@style.css"
+    prefWidth="800" prefHeight="400"
+    styleClass="root">
+
+    <children>
+        <Label text="CSCI 6461 Machine Simulator" layoutX="300" layoutY="10"
+            styleClass="title-label" />
+
+        <!-- GPR Section -->
+        <VBox layoutX="10" layoutY="50" spacing="5">
+            <Label text="GPR" styleClass="section-label" />
+            <GridPane hgap="5" vgap="5">
+                <columnConstraints>
+                    <ColumnConstraints halignment="RIGHT" minWidth="25" />
+                    <ColumnConstraints halignment="LEFT" minWidth="50" />
+                </columnConstraints>
+                <rowConstraints>
+                    <RowConstraints />
+                    <RowConstraints />
+                    <RowConstraints />
+                    <RowConstraints />
+                </rowConstraints>
+                <children>
+                    <Label text="0" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+                    <TextField fx:id="gpr0" prefWidth="50" GridPane.rowIndex="0"
+                        GridPane.columnIndex="1" />
+                    <Button
+                        fx:id="runBtn" styleClass="ctm-btn, btn" GridPane.columnIndex="2"
+                        GridPane.rowIndex="0">
+                        <effect>
+                            <DropShadow color="#465d6c" radius="10.0" offsetX="1.0"
+                                offsetY="1.0" />
+                        </effect>
+                    </Button>
+
+                    <Label text="1" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+                    <TextField fx:id="gpr1" prefWidth="50" GridPane.rowIndex="1"
+                        GridPane.columnIndex="1" />
+                    <Button
+                        fx:id="runBtn" styleClass="ctm-btn, btn" GridPane.columnIndex="2"
+                        GridPane.rowIndex="1">
+                        <effect>
+                            <DropShadow color="#465d6c" radius="10.0" offsetX="1.0"
+                                offsetY="1.0" />
+                        </effect>
+                    </Button>
+
+                    <Label text="2" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+                    <TextField fx:id="gpr2" prefWidth="50" GridPane.rowIndex="2"
+                        GridPane.columnIndex="1" />
+                    <Button
+                        fx:id="runBtn" styleClass="ctm-btn, btn" GridPane.columnIndex="2"
+                        GridPane.rowIndex="2">
+                        <effect>
+                            <DropShadow color="#465d6c" radius="10.0" offsetX="1.0"
+                                offsetY="1.0" />
+                        </effect>
+                    </Button>
+
+
+                    <Label text="3" GridPane.rowIndex="3" GridPane.columnIndex="0" />
+                    <TextField fx:id="gpr3" prefWidth="50" GridPane.rowIndex="3"
+                        GridPane.columnIndex="1" />
+                    <Button
+                        fx:id="runBtn" styleClass="ctm-btn, btn" GridPane.columnIndex="2"
+                        GridPane.rowIndex="3">
+                        <effect>
+                            <DropShadow color="#465d6c" radius="10.0" offsetX="1.0"
+                                offsetY="1.0" />
+                        </effect>
+                    </Button>
+
+                </children>
+            </GridPane>
+        </VBox>
+
+        <!-- IXR Section -->
+        <VBox layoutX="140" layoutY="50" spacing="5">
+            <Label text="IXR" styleClass="section-label" />
+            <GridPane hgap="5" vgap="5">
+                <children>
+                    <Label text="1" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+                    <TextField
+                        fx:id="ixr1" prefWidth="50" GridPane.rowIndex="0"
+                        GridPane.columnIndex="1" />
+                    <Button
+                        fx:id="runBtn" styleClass="ctm-btn, btn" GridPane.columnIndex="2"
+                        GridPane.rowIndex="0">
+                        <effect>
+                            <DropShadow color="#465d6c" radius="10.0" offsetX="1.0"
+                                offsetY="1.0" />
+                        </effect>
+                    </Button>
+
+                    <Label
+                        text="2" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+                    <TextField
+                        fx:id="ixr2" prefWidth="50" GridPane.rowIndex="1"
+                        GridPane.columnIndex="1" />
+                    <Button
+                        fx:id="runBtn" styleClass="ctm-btn, btn" GridPane.columnIndex="2"
+                        GridPane.rowIndex="1">
+                        <effect>
+                            <DropShadow color="#465d6c" radius="10.0" offsetX="1.0"
+                                offsetY="1.0" />
+                        </effect>
+                    </Button>
+
+                    <Label
+                        text="3" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+                    <TextField
+                        fx:id="ixr3" prefWidth="50" GridPane.rowIndex="2"
+                        GridPane.columnIndex="1" />
+                    <Button
+                        fx:id="runBtn" styleClass="ctm-btn, btn" GridPane.columnIndex="2"
+                        GridPane.rowIndex="2">
+                        <effect>
+                            <DropShadow color="#465d6c" radius="10.0" offsetX="1.0"
+                                offsetY="1.0" />
+                        </effect>
+                    </Button>
+
+                </children>
+            </GridPane>
+        </VBox>
+
+        <!-- PC, MAR, MBR, IR -->
+        <VBox layoutX="270" layoutY="70" spacing="5">
+            <HBox spacing="8">
+                <Label text="PC" styleClass="section-label" />
+                <TextField fx:id="pcField" prefWidth="80" />
+                <Button styleClass="ctm-btn, btn">
+                    <effect>
+                        <DropShadow color="#465d6c" radius="10.0" offsetX="1.0"
+                            offsetY="1.0" />
+                    </effect>
+                </Button>
+            </HBox>
+            <HBox spacing="8">
+                <Label text="MAR" styleClass="section-label" />
+                <TextField fx:id="marField" prefWidth="80" />
+                <Button styleClass="ctm-btn, btn">
+                    <effect>
+                        <DropShadow color="#465d6c" radius="10.0" offsetX="1.0"
+                            offsetY="1.0" />
+                    </effect>
+                </Button>
+            </HBox>
+            <HBox spacing="8">
+                <Label text="MBR" styleClass="section-label" />
+                <TextField fx:id="mbrField" prefWidth="80" />
+                <Button styleClass="ctm-btn, btn">
+                    <effect>
+                        <DropShadow color="#465d6c" radius="10.0" offsetX="1.0"
+                            offsetY="1.0" />
+                    </effect>
+                </Button>
+            </HBox>
+            <HBox spacing="8">
+                <Label text="IR" styleClass="section-label" />
+                <TextField fx:id="irField" prefWidth="80" />
+            </HBox>
+        </VBox>
+
+        <!-- Controls -->
+        <VBox layoutX="20" layoutY="230" spacing="8">
+            <HBox spacing="10">
+                <VBox spacing="10">
+                    <VBox spacing="3">
+                        <Label text="Binary:" />
+                        <TextField fx:id="binary" prefWidth="500" />
+                    </VBox>
+                    <HBox spacing="8">
+                        <Label text="OCTAL INPUT" />
+                        <TextField fx:id="octalInput" text="0" prefWidth="60" />
+                    </HBox>
+                </VBox>
+                <VBox spacing="8">
+                    <RadioButton text="Load" toggleGroup="$actionGroup" />
+                    <RadioButton text="Load+" toggleGroup="$actionGroup" />
+                    <RadioButton text="Store" toggleGroup="$actionGroup" />
+                    <RadioButton text="Store+" toggleGroup="$actionGroup" />
+                </VBox>
+
+                <VBox spacing="8">
+                    <HBox spacing="8">
+                        <Button fx:id="runBtn" styleClass="ctm-btn, btn">
+                            <effect>
+                                <DropShadow color="#465d6c" radius="10.0" offsetX="1.0"
+                                    offsetY="1.0" />
+                            </effect>
+                        </Button>
+                        <Label>Run</Label>
+                    </HBox>
+                    <HBox spacing="8">
+                        <Button fx:id="stepBtn" styleClass="ctm-btn, btn">
+                            <effect>
+                                <DropShadow color="#465d6c" radius="10.0" offsetX="1.0"
+                                    offsetY="1.0" />
+                            </effect>
+                        </Button>
+                        <Label>Step</Label>
+                    </HBox>
+                    <HBox spacing="8">
+                        <Button fx:id="haltBtn" styleClass="ctm-btn, btn">
+                            <effect>
+                                <DropShadow color="#465d6c" radius="10.0" offsetX="1.0"
+                                    offsetY="1.0" />
+                            </effect>
+                        </Button>
+                        <Label>Halt</Label>
+                    </HBox>
+                </VBox>
+
+                <VBox>
+                    <HBox spacing="5">
+                        <Button fx:id="iplBtn" styleClass="ipl-btn, btn">
+                            <effect>
+                                <DropShadow color="#465d6c" radius="10.0" offsetX="1.0"
+                                    offsetY="1.0" />
+                            </effect>
+                        </Button>
+                        <Label text="IPL" />
+                    </HBox>
+                </VBox>
+            </HBox>
+        </VBox>
+
+        <!-- Program File -->
+        <HBox layoutX="20" layoutY="340" spacing="10">
+            <Label text="Program File:" />
+            <TextField fx:id="programFile" prefWidth="500" />
+            <Button text="Load" fx:id="loadFileBtn">
+                <effect>
+                    <DropShadow color="#000000" radius="10.0" offsetX="1.0" offsetY="1.0" />
+                </effect>
+            </Button>
+        </HBox>
+    </children>
+</AnchorPane>

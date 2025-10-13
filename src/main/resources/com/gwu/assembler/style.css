@@ -1,0 +1,51 @@
+.root {
+    -fx-background-color: #c8e6f3;
+    -fx-font-family: "Segoe UI";
+}
+
+.title-label {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #003366;
+}
+
+.section-label {
+    -fx-font-weight: normal;
+    -fx-margin: 10px;
+    -fx-font-size: 12px;
+    -fx-pref-width: 30;
+}
+
+.text-field {
+    -fx-pref-width: 60;
+}
+
+.ipl-btn {
+    -fx-background-color: red;
+}
+
+.ctm-btn {
+    -fx-background-color: rgb(0, 149, 255);
+}
+
+.btn {
+    -fx-cursor: hand;
+    -fx-min-width: 5;
+    -fx-min-height: 0 !important;
+    -fx-pref-height: 16;
+    -fx-border-radius: 12;
+}
+
+.ctm-btn:hover {
+    -fx-background-color: rgb(59, 125, 171);
+}
+
+.ctm-btn:pressed,
+.ipl-btn:pressed {
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1
+}
+
+.ipl-btn:hover {
+    -fx-background-color: rgb(234, 66, 66);
+}
