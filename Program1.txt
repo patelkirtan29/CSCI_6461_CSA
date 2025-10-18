@@ -1,0 +1,9 @@
+; Demonstration Program for LDR and STR
+; Shows direct, indirect, and indexed addressing
+
+START:  LDR R0, 100      ; Direct addressing
+        STR R0, 200      ; Store direct
+        LDR R1, 300, I   ; Indirect
+        STR R1, 400, X   ; Indexed
+        LDR R2, 500      ; Another load
+        HLT              ; Stop program
