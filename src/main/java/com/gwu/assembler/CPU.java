@@ -1,6 +1,6 @@
 package com.gwu.assembler;
 
-import java.util.Arrays;
+import com.gwu.simulator.Memory;
 
 public class CPU {
     // Is the machine halted?
@@ -116,7 +116,7 @@ public class CPU {
         for (int i = 0; i < GPR.length; i++)
             setGPR(i, 0);
         for (int i = 0; i < IXR.length; i++)
-            setIXR(i, 0);
+            setIXR(i + 1, 0); // IXR indices are 1-based in setIXR
     }
 
     public boolean isHalted() { return halted; }
@@ -148,14 +148,17 @@ public class CPU {
     public int getIXR(int i) { return IXR[i - 1]; }
 
     private void readMemory(int address) {
-        setMAR(address);
-        int content = memory.read(MAR);
+        // Use Memory API: set MAR, perform read(), then get MBR
+        memory.setMAR(address);
+        memory.read();
+        int content = memory.getMBR();
         setMBR(content);
     }
     private void writeMemory(int address, int value) {
-        setMAR(address);
-        setMBR(value);
-        memory.write(MAR, MBR);
+        // Use Memory API: set MAR and MBR, then perform write()
+        memory.setMAR(address);
+    memory.setMBR((short) value);
+        memory.write();
     }
 
     private int getEA(int i, int ix, int address) {

@@ -3,6 +3,8 @@ package com.gwu.assembler;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import com.gwu.simulator.Memory;
+import com.gwu.assembler.CPU;
 
 public class AssemblerIntegration {
 
@@ -67,13 +69,26 @@ public class AssemblerIntegration {
     // Step 3: Loader integration (replace with Yeabsira’s loader)
     public static void loadIntoMemory(List<Integer> machineCode) {
         System.out.println("[INFO] Loading " + machineCode.size() + " words into memory...");
-        // Replace this block with real loader API:
-        // YeabsiraLoader loader = new YeabsiraLoader();
-        // loader.loadWords(machineCode.stream().mapToInt(Integer::intValue).toArray());
-        for (int i = 0; i < machineCode.size(); i++) {
-            System.out.printf("MEM[%04d] = %s%n", i, Integer.toBinaryString(machineCode.get(i)));
+
+        Memory memory = new Memory();
+        for (int addr = 0; addr < machineCode.size(); addr++) {
+            int word = machineCode.get(addr);
+            memory.setMAR(addr);
+            memory.setMBR((short) word);
+            memory.write();
         }
-        System.out.println("[INFO] Memory load simulation complete.");
+
+        System.out.println("[INFO] Program loaded into memory successfully.");
+
+        // Create CPU and run it for a limited number of steps to avoid infinite loops
+        CPU cpu = new CPU(memory);
+        int maxSteps = 1000;
+        int steps = 0;
+        while (!cpu.isHalted() && steps < maxSteps) {
+            cpu.step();
+            steps++;
+        }
+        System.out.println("[INFO] CPU executed " + steps + " steps; halted=" + cpu.isHalted());
     }
 
     // Step 4: End-to-end integration
