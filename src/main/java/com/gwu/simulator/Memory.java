@@ -84,9 +84,33 @@ public class Memory {
      * 000007 000003
      */
     public void loadProgramFromFile(String filePath) throws IOException {
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+        BufferedReader br = null;
+        boolean loaded = false;
+
+        // First try opening as a regular filesystem path
+        try {
+            br = new BufferedReader(new FileReader(filePath));
+            loaded = true;
+        } catch (FileNotFoundException e) {
+            // If not found on filesystem, try to load as a classpath resource
+            InputStream is = getClass().getClassLoader().getResourceAsStream(filePath.replace('\\', '/'));
+            if (is == null) {
+                // Try relative path without leading directories
+                is = getClass().getClassLoader().getResourceAsStream(new java.io.File(filePath).getName());
+            }
+            if (is != null) {
+                br = new BufferedReader(new InputStreamReader(is));
+                loaded = true;
+            }
+        }
+
+        if (!loaded || br == null) {
+            throw new FileNotFoundException("Program file not found (filesystem or classpath): " + filePath);
+        }
+
+        try (BufferedReader reader = br) {
             String line;
-            while ((line = br.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 line = line.trim();
                 if (line.isEmpty() || line.startsWith("#")) continue;
 
@@ -103,6 +127,7 @@ public class Memory {
                 }
             }
         }
+
         System.out.println("✅ Program loaded successfully into memory.");
     }
 
