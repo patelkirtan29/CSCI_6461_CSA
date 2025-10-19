@@ -19,6 +19,8 @@ By running the following command, you run the simulator.
 ```bash
 # update PATH_TO_FX to your JavaFX library path in run_sim_jar.sh
 bash run_sim_jar.sh
+# or you can run
+java --module-path "$PATH_TO_FX" --add-modules javafx.controls,javafx.fxml -jar Simulator.jar
 ```
 
 ## Testing
