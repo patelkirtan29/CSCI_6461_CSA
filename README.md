@@ -17,8 +17,8 @@ bash build_jar.sh
 ## Run
 By running the following command, you run the simulator.
 ```bash
-# update PATH_TO_FX to your JavaFX library path in run_jar.sh
-bash run_jar.sh
+# update PATH_TO_FX to your JavaFX library path in run_sim_jar.sh
+bash run_sim_jar.sh
 ```
 
 ## Testing
