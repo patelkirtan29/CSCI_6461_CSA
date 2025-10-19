@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# change this path to your JavaFX SDK lib directory
 PATH_TO_FX="D:\JavaFx\javafx-sdk-25\lib"
 
 mkdir -p temp/classes/com/gwu/assembler
