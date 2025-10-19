@@ -3,6 +3,15 @@ LOC 200
 Data 15
 Data 25
 Data 0                   ; Result storage
+Data 10
+Data 30
+Data 8
+Data 16
+Data 25
+Data 13
+Data 9
+Data 6
+Data 7
 
 ; Memory-based arithmetic
 LDR 1,0,200             ; Load R1 = 15
