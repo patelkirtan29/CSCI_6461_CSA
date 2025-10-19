@@ -161,7 +161,6 @@ public class CPU {
     }
 
     public void setMBR(int value) {
-        System.out.println("MBR: " + value);
         MBR = value & 0xFFFF;
     }
 
@@ -186,12 +185,10 @@ public class CPU {
     }
 
     public void setGPR(int i, int value) {
-        System.out.println("GPR[" + i + "]: " + value);
         GPR[i] = value & 0xFFFF;
     }
 
     public int getGPR(int i) {
-        System.out.println("GPR[" + i + "]: ");
         return GPR[i];
     }
 
