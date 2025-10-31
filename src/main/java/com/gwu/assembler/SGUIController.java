@@ -1,6 +1,7 @@
 package com.gwu.assembler;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -14,22 +15,62 @@ public class SGUIController {
     private CPU cpu;
     private Memory memory;
 
-    @FXML private TextField gpr0, gpr1, gpr2, gpr3;
-    @FXML private TextField ixr1, ixr2, ixr3;
-    @FXML private TextField mar, mbr, pc, ir;
-    @FXML private TextField octalInput, binary;
-    @FXML private TextField programFile;
-    @FXML private Button singleStepBtn, runBtn, iplBtn, haltBtn;
-    @FXML private Button loadBtn, loadPlusBtn, storeBtn, storePlusBtn;
-    @FXML private Button gpr0Btn, gpr1Btn, gpr2Btn, gpr3Btn;
-    @FXML private Button ixr1Btn, ixr2Btn, ixr3Btn;
-    @FXML private Button pcBtn, marBtn, mbrBtn, irBtn;
+    @FXML
+    private TextField gpr0, gpr1, gpr2, gpr3;
+    @FXML
+    private TextField ixr1, ixr2, ixr3;
+    @FXML
+    private TextField mar, mbr, pc, ir;
+    @FXML
+    private TextField octalInput, binary;
+    @FXML
+    private TextField programFile;
+    @FXML
+    private Button singleStepBtn, runBtn, iplBtn, haltBtn;
+    @FXML
+    private Button loadBtn, loadPlusBtn, storeBtn, storePlusBtn;
+    @FXML
+    private Button gpr0Btn, gpr1Btn, gpr2Btn, gpr3Btn;
+    @FXML
+    private Button ixr1Btn, ixr2Btn, ixr3Btn;
+    @FXML
+    private Button pcBtn, marBtn, mbrBtn, irBtn;
+
+    // I/O UI
+    @FXML
+    private javafx.scene.control.TextArea consolePrinterArea;
+    @FXML
+    private javafx.scene.control.TextField keyboardInputField;
+    @FXML
+    private javafx.scene.control.Button keyboardSubmitBtn;
+
+    // Cache UI
+    @FXML
+    private javafx.scene.control.TableView<com.gwu.simulator.Cache.Line> cacheTable;
+    @FXML
+    private javafx.scene.control.TableColumn<com.gwu.simulator.Cache.Line, String> colIndex;
+    @FXML
+    private javafx.scene.control.TableColumn<com.gwu.simulator.Cache.Line, String> colValid;
+    @FXML
+    private javafx.scene.control.TableColumn<com.gwu.simulator.Cache.Line, String> colTag;
+    @FXML
+    private javafx.scene.control.TableColumn<com.gwu.simulator.Cache.Line, String> colData;
+    @FXML
+    private javafx.scene.control.Button invalidateCacheBtn;
+    @FXML
+    private javafx.scene.control.Button showCacheStatsBtn;
 
     @FXML
     public void initialize() {
         memory = new Memory();
+        memory.setConsolePrinter(s -> {
+            // append on FX thread
+            Platform.runLater(() -> consolePrinterArea.appendText(s));
+        });
+
         cpu = new CPU(memory);
         setupListeners();
+        setupCacheTable();
         setupIPLProgram();
     }
 
@@ -71,6 +112,19 @@ public class SGUIController {
         runBtn.setOnAction(e -> handleRun());
         haltBtn.setOnAction(e -> handleHalt());
         iplBtn.setOnAction(e -> handleIPL());
+
+        keyboardSubmitBtn.setOnAction(e -> {
+            String txt = keyboardInputField.getText();
+            if (txt == null || txt.trim().isEmpty())
+                return;
+            try {
+                int val = Integer.parseInt(txt); // decimal input assumed; change if you want octal
+                memory.enqueueInput((short) val);
+                keyboardInputField.clear();
+            } catch (NumberFormatException ex) {
+                System.err.println("Invalid input: " + txt);
+            }
+        });
     }
 
     private void handleSingleStep() {
@@ -105,13 +159,13 @@ public class SGUIController {
         try {
             memory.reset(); // Clear memory before loading new program
             memory.loadProgramFromFile(programPath);
-            cpu.reset();  // Reset CPU state after loading program
+            cpu.reset(); // Reset CPU state after loading program
             updateDisplays();
         } catch (IOException e) {
             System.err.println("Error loading program from file '" + programPath + "': " + e.getMessage());
         }
     }
-    
+
     private void updateDisplays() {
         if (Platform.isFxApplicationThread()) {
             updateDisplaysInternal();
@@ -137,9 +191,10 @@ public class SGUIController {
         ir.setText(String.format("%o", cpu.getIR()));
         mar.setText(String.format("%o", cpu.getMAR()));
         mbr.setText(String.format("%o", cpu.getMBR()));
+
+        // refresh cache table
+        refreshCacheTable();
     }
-
-
 
     private void updateBinaryDisplay(String octalStr) {
         if (octalStr.isEmpty()) {
@@ -149,14 +204,12 @@ public class SGUIController {
         try {
             int octalValue = Integer.parseInt(octalStr, 8);
             String binaryStr = String.format("%16s", Integer.toBinaryString(octalValue))
-                                   .replace(' ', '0');
+                    .replace(' ', '0');
             binary.setText(binaryStr);
         } catch (NumberFormatException e) {
             binary.setText("Invalid octal input");
         }
     }
-
-
 
     private void loadFromMemory() {
         cpu.manual_load();
@@ -189,5 +242,38 @@ public class SGUIController {
                 System.err.println("Invalid octal input: " + octalValue);
             }
         }
+    }
+
+    private void setupCacheTable() {
+        // colIndex: shows line index
+        colIndex.setCellValueFactory(cell -> {
+            int idx = memory.getCache().getLines().indexOf(cell.getValue());
+            return new javafx.beans.property.SimpleStringProperty(String.valueOf(idx));
+        });
+        colValid.setCellValueFactory(
+                cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().valid ? "1" : "0"));
+        colTag.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(
+                cell.getValue().tag >= 0 ? String.valueOf(cell.getValue().tag) : "-"));
+        colData.setCellValueFactory(
+                cell -> new javafx.beans.property.SimpleStringProperty(String.format("%06o", cell.getValue().data)));
+
+        // populate
+        refreshCacheTable();
+
+        invalidateCacheBtn.setOnAction(e -> {
+            memory.getCache().reset();
+            refreshCacheTable();
+        });
+
+        showCacheStatsBtn.setOnAction(e -> {
+            long hits = memory.getCache().getHits();
+            long misses = memory.getCache().getMisses();
+            System.out.println("Cache hits: " + hits + " misses: " + misses);
+        });
+    }
+
+    private void refreshCacheTable() {
+        List<com.gwu.simulator.Cache.Line> lines = memory.getCache().getLines();
+        cacheTable.getItems().setAll(lines);
     }
 }

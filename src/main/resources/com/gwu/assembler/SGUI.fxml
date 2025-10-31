@@ -10,7 +10,7 @@
     xmlns:fx="http://javafx.com/fxml"
     fx:controller="com.gwu.assembler.SGUIController"
     stylesheets="@style.css"
-    prefWidth="800" prefHeight="400"
+    prefWidth="800" prefHeight="650"
     styleClass="root">
 
     <children>
@@ -275,5 +275,21 @@
             <Label text="Program File:" />
             <TextField fx:id="programFile" prefWidth="500" minWidth="200" />
         </HBox>
+
+        <!-- Cache UI Panel -->
+        <VBox layoutX="450" layoutY="50" spacing="8">
+            <Label text="Cache Content"/>
+            <TextArea fx:id="cacheInput" prefWidth="330" prefHeight="250" editable="false"/>
+        </VBox>
+
+        <!-- I/O UI Panel -->
+        <VBox layoutX="450" layoutY="360" spacing="8">
+            <Label text="Printer"/>
+            <TextArea fx:id="printerField" prefWidth="330" prefHeight="120" editable="false"/>
+
+            <Label text="Console Input"/>
+            <TextField fx:id="consoleInputField" prefWidth="330" promptText="Enter input"/>
+        </VBox>
+
     </children>
 </AnchorPane>
