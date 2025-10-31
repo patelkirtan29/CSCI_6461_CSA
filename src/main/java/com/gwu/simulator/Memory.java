@@ -19,11 +19,11 @@ public class Memory {
     private int currentTimestamp;
 
     // Inner class for cache line structure
-    private static class CacheLine {
-        boolean valid;      // Valid bit
-        int tag;           // Tag field (memory address)
-        short data;        // Data stored in cache line
-        int timestamp;     // For FIFO replacement
+    public static class CacheLine {
+        public boolean valid;      // Valid bit
+        public int tag;           // Tag field (memory address)
+        public short data;        // Data stored in cache line
+        public int timestamp;     // For FIFO replacement
 
         CacheLine() {
             valid = false;
@@ -208,15 +208,29 @@ public class Memory {
     /** Log cache operations to trace file */
     private void traceLog(String operation, int address, short value) {
         if (traceWriter != null) {
-            traceWriter.printf("%s: Address=%04o, Value=%06o, Hits=%d, Misses=%d, Hit Rate=%.2f%%\n",
+            String message = String.format("%s: Address=%04o, Value=%06o, Hits=%d, Misses=%d, Hit Rate=%.2f%%\n",
                     operation, address, value, hitCount, missCount, getHitRate());
+            traceWriter.printf(message);
             traceWriter.flush();
+            if (consolePrinter != null) {
+                consolePrinter.accept(message);
+            }
         }
+    }
+
+    private java.util.function.Consumer<String> consolePrinter;
+
+    public void setConsolePrinter(java.util.function.Consumer<String> printer) {
+        this.consolePrinter = printer;
     }
 
     /** Get cache hit rate */
     public double getHitRate() {
         return accessCount == 0 ? 0 : (hitCount * 100.0) / accessCount;
+    }
+
+    public void enqueueInput(short value) {
+        // For compatibility with the UI - not used in this implementation
     }
 
     /** Get cache statistics */
@@ -227,6 +241,21 @@ public class Memory {
                            "Cache Misses: %d\n" +
                            "Hit Rate: %.2f%%\n",
                            accessCount, hitCount, missCount, getHitRate());
+    }
+
+    /** Get the contents of the cache for visualization */
+    public CacheLine[] getCacheContents() {
+        CacheLine[] copy = new CacheLine[CACHE_SIZE];
+        for (int i = 0; i < CACHE_SIZE; i++) {
+            CacheLine line = cache[i];
+            CacheLine newLine = new CacheLine();
+            newLine.valid = line.valid;
+            newLine.tag = line.tag;
+            newLine.data = line.data;
+            newLine.timestamp = line.timestamp;
+            copy[i] = newLine;
+        }
+        return copy;
     }
 
     /** Close the trace file */

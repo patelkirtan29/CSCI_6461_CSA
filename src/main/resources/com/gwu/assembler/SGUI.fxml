@@ -278,8 +278,20 @@
 
         <!-- Cache UI Panel -->
         <VBox layoutX="450" layoutY="50" spacing="8">
-            <Label text="Cache Content"/>
-            <TextArea fx:id="cacheInput" prefWidth="330" prefHeight="250" editable="false"/>
+            <Label text="Cache Content" styleClass="section-label"/>
+            <TableView fx:id="cacheTable" prefWidth="330" prefHeight="250">
+                <columns>
+                    <TableColumn fx:id="colIndex" text="Line" prefWidth="50"/>
+                    <TableColumn fx:id="colValid" text="Valid" prefWidth="50"/>
+                    <TableColumn fx:id="colTag" text="Address" prefWidth="100"/>
+                    <TableColumn fx:id="colData" text="Data" prefWidth="130"/>
+                </columns>
+            </TableView>
+            <HBox spacing="10">
+                <Button fx:id="invalidateCacheBtn" text="Clear Cache"/>
+                <Button fx:id="showCacheStatsBtn" text="Show Statistics"/>
+                <Label fx:id="cacheStatsLabel"/>
+            </HBox>
         </VBox>
 
         <!-- I/O UI Panel -->

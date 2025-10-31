@@ -2,11 +2,14 @@ package com.gwu.assembler;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 
 import com.gwu.simulator.CPU;
 import com.gwu.simulator.Memory;
@@ -41,20 +44,20 @@ public class SGUIController {
     private javafx.scene.control.TextArea consolePrinterArea;
     @FXML
     private javafx.scene.control.TextField keyboardInputField;
-    @FXML
-    private javafx.scene.control.Button keyboardSubmitBtn;
+    // @FXML
+    // private javafx.scene.control.Button keyboardSubmitBtn;
 
     // Cache UI
     @FXML
-    private javafx.scene.control.TableView<com.gwu.simulator.Cache.Line> cacheTable;
+    private javafx.scene.control.TableView<Map<String, String>> cacheTable;
     @FXML
-    private javafx.scene.control.TableColumn<com.gwu.simulator.Cache.Line, String> colIndex;
+    private javafx.scene.control.TableColumn<Map<String, String>, String> colIndex;
     @FXML
-    private javafx.scene.control.TableColumn<com.gwu.simulator.Cache.Line, String> colValid;
+    private javafx.scene.control.TableColumn<Map<String, String>, String> colValid;
     @FXML
-    private javafx.scene.control.TableColumn<com.gwu.simulator.Cache.Line, String> colTag;
+    private javafx.scene.control.TableColumn<Map<String, String>, String> colTag;
     @FXML
-    private javafx.scene.control.TableColumn<com.gwu.simulator.Cache.Line, String> colData;
+    private javafx.scene.control.TableColumn<Map<String, String>, String> colData;
     @FXML
     private javafx.scene.control.Button invalidateCacheBtn;
     @FXML
@@ -113,18 +116,18 @@ public class SGUIController {
         haltBtn.setOnAction(e -> handleHalt());
         iplBtn.setOnAction(e -> handleIPL());
 
-        keyboardSubmitBtn.setOnAction(e -> {
-            String txt = keyboardInputField.getText();
-            if (txt == null || txt.trim().isEmpty())
-                return;
-            try {
-                int val = Integer.parseInt(txt); // decimal input assumed; change if you want octal
-                memory.enqueueInput((short) val);
-                keyboardInputField.clear();
-            } catch (NumberFormatException ex) {
-                System.err.println("Invalid input: " + txt);
-            }
-        });
+        // keyboardSubmitBtn.setOnAction(e -> {
+        //     String txt = keyboardInputField.getText();
+        //     if (txt == null || txt.trim().isEmpty())
+        //         return;
+        //     try {
+        //         int val = Integer.parseInt(txt); // decimal input assumed; change if you want octal
+        //         memory.enqueueInput((short) val);
+        //         keyboardInputField.clear();
+        //     } catch (NumberFormatException ex) {
+        //         System.err.println("Invalid input: " + txt);
+        //     }
+        // });
     }
 
     private void handleSingleStep() {
@@ -244,36 +247,56 @@ public class SGUIController {
         }
     }
 
+    @FXML
+    private Label cacheStatsLabel;
+
+    @SuppressWarnings("unchecked")
     private void setupCacheTable() {
-        // colIndex: shows line index
-        colIndex.setCellValueFactory(cell -> {
-            int idx = memory.getCache().getLines().indexOf(cell.getValue());
-            return new javafx.beans.property.SimpleStringProperty(String.valueOf(idx));
-        });
-        colValid.setCellValueFactory(
-                cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().valid ? "1" : "0"));
-        colTag.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(
-                cell.getValue().tag >= 0 ? String.valueOf(cell.getValue().tag) : "-"));
-        colData.setCellValueFactory(
-                cell -> new javafx.beans.property.SimpleStringProperty(String.format("%06o", cell.getValue().data)));
+        // Configure table columns
+        colIndex.setCellValueFactory(data -> 
+            new javafx.beans.property.SimpleStringProperty(((Map<String, String>)data.getValue()).get("index")));
+        colValid.setCellValueFactory(data -> 
+            new javafx.beans.property.SimpleStringProperty(((Map<String, String>)data.getValue()).get("valid")));
+        colTag.setCellValueFactory(data -> 
+            new javafx.beans.property.SimpleStringProperty(((Map<String, String>)data.getValue()).get("tag")));
+        colData.setCellValueFactory(data -> 
+            new javafx.beans.property.SimpleStringProperty(((Map<String, String>)data.getValue()).get("data")));
 
-        // populate
-        refreshCacheTable();
-
+        // Set up cache control buttons
         invalidateCacheBtn.setOnAction(e -> {
-            memory.getCache().reset();
+            memory.reset(); // This will also reset the cache
             refreshCacheTable();
         });
 
         showCacheStatsBtn.setOnAction(e -> {
-            long hits = memory.getCache().getHits();
-            long misses = memory.getCache().getMisses();
-            System.out.println("Cache hits: " + hits + " misses: " + misses);
+            String stats = memory.getCacheStats();
+            System.out.println(stats);
+            // printToConsole(stats);
         });
+
+        // Initial population
+        refreshCacheTable();
     }
 
+    @SuppressWarnings("unchecked")
     private void refreshCacheTable() {
-        List<com.gwu.simulator.Cache.Line> lines = memory.getCache().getLines();
-        cacheTable.getItems().setAll(lines);
+        // Clear existing items
+        cacheTable.getItems().clear();
+
+        // Update hit rate
+        double hitRate = memory.getHitRate();
+        cacheStatsLabel.setText(String.format("Hit Rate: %.2f%%", hitRate));
+
+        // Get and display cache contents
+        Memory.CacheLine[] cacheLines = memory.getCacheContents();
+        for (int i = 0; i < cacheLines.length; i++) {
+            Memory.CacheLine line = cacheLines[i];
+            Map<String, String> item = new HashMap<>();
+            item.put("index", String.valueOf(i));
+            item.put("valid", line.valid ? "1" : "0");
+            item.put("tag", line.valid ? String.format("%04o", line.tag) : "-");
+            item.put("data", String.format("%06o", line.data));
+            cacheTable.getItems().add(item);
+        }
     }
 }
