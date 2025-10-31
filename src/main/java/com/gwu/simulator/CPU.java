@@ -52,6 +52,14 @@ public class CPU {
             executeHaltInstruction();
         } else if (opcode == 1 || opcode == 2 || opcode == 3 || opcode == 33 || opcode == 34) {
             executeLoadStoreInstruction();
+        } else if (opcode == 8 || opcode == 9 || opcode == 10 || opcode == 11 || opcode == 12 || opcode == 13 || opcode == 14 || opcode == 15) {
+            executeTransferInstruction();
+        } else if (opcode == 4 || opcode == 5 || opcode == 6 || opcode == 7) {
+            executeArithmeticAndLogicalInstruction();
+        } else if (opcode == 56 || opcode == 57 || opcode == 58 || opcode == 59 || opcode == 60 || opcode == 61) {
+            executeRegisterToRegisterInstruction();
+        } else if (opcode == 25 || opcode == 26) {
+            executeShiftRotateOperation();
         }
     }
 
@@ -65,10 +73,8 @@ public class CPU {
         int ix = (IR >> 6) & 0x3;
         int i = (IR >> 5) & 1;
         int address = IR & 0x1F;
-        System.out.println("Load/Store Instruction" + opcode + " r" + r + " ix" + ix + " i" + i + " adr" + address);
         if (opcode == 1) { // load register from memory
             int ea = getEA(i, ix, address);
-            System.out.println("Effective Address: " + ea);
             readMemory(ea);
             setGPR(r, MBR);
         } else if (opcode == 2) {
@@ -86,6 +92,126 @@ public class CPU {
             int ea = getEA(i, 0, address);
             int valueToWrite = getIXR(ix);
             writeMemory(ea, valueToWrite);
+        }
+    }
+
+    public void executeTransferInstruction() {
+        int opcode = (IR >> 10) & 0x3F;
+        int r = (IR >> 8) & 0x3;
+        int ix = (IR >> 6) & 0x3;
+        int i = (IR >> 5) & 1;
+        int address = IR & 0x1F;
+
+        int ea = getEA(i, ix, address);
+
+        // PC is already incremented by 1 during fetch, so don't do PC + 1
+        if (opcode == 8) {
+            if (getGPR(r) == 0) {
+                setPC(ea);
+            }
+        } else if (opcode == 9) {
+            if (getGPR(r) != 0) {
+                setPC(ea);
+            }
+        } else if (opcode == 10) {
+            int CCbit = (getCC() >> r) & 1;
+            if (CCbit == 1) {
+                setPC(ea);
+            }
+        } else if (opcode == 11) {
+            setPC(ea);
+        } else if (opcode == 12) {
+            // PC is already incremented by 1
+            setGPR(3, getPC());
+            setPC(ea);
+        } else if (opcode == 13) {
+            setGPR(0, address);
+            setPC(getGPR(3));
+        } else if (opcode == 14) {
+            int rVal = getGPR(r);
+            rVal -= 1;
+            setGPR(r, rVal);
+            if (rVal > 0) {
+                setPC(ea);
+            }
+        } else if (opcode == 15) {
+            int rVal = getGPR(r);
+            if (rVal >= 0) {
+                setPC(ea);
+            }
+        }
+    }
+
+    public void executeArithmeticAndLogicalInstruction() {
+        int opcode = (IR >> 10) & 0x3F;
+        int r = (IR >> 8) & 0x3;
+        int ix = (IR >> 6) & 0x3;
+        int i = (IR >> 5) & 1;
+        int address = IR & 0x1F;
+
+        int ea = getEA(i, ix, address);
+        if (opcode == 4) {
+            readMemory(ea);
+            int mem = getMBR();
+            int result = machineAdd(getGPR(i), mem);
+            setGPR(i, result);
+        } else if (opcode == 5) {
+            readMemory(ea);
+            int mem = getMBR();
+            int result = machineSub(getGPR(i), mem);
+            setGPR(i, result);
+        } else if (opcode == 6) {
+            int result = machineAdd(getGPR(i), address);
+            setGPR(i, result);
+        } else if (opcode == 7) {
+            int result = machineSub(getGPR(i), address);
+            setGPR(i, result);
+        }
+    }
+    
+    public void executeRegisterToRegisterInstruction() {
+        int opcode = (IR >> 10) & 0x3F;
+        int rx = (IR >> 8) & 0x3;
+        int ry = (IR >> 6) & 0x3;
+        if (opcode == 56) {
+            int result = machineMult(getGPR(rx), getGPR(ry));
+            int upperHalf = (result >> 16) & 0xFFFF;
+            int lowerHalf = result & 0xFFFF;
+            setGPR(rx, upperHalf);
+            setGPR(rx + 1, lowerHalf);
+        } else if (opcode == 57) {
+            int result = machineDiv(getGPR(rx), getGPR(ry));
+            int quotient = (result >> 16) & 0xFFFF;
+            int remainder = result & 0xFFFF;
+            setGPR(rx, quotient);
+            setGPR(rx + 1, remainder);
+        } else if (opcode == 58) {
+            machineTRR(getGPR(rx), getGPR(ry));
+        } else if (opcode == 59) {
+            int result = machineAND(getGPR(rx), getGPR(ry));
+            setGPR(rx, result);
+        } else if (opcode == 60) {
+            int result = machineOR(getGPR(rx), getGPR(ry));
+            setGPR(rx, result);
+        } else if (opcode == 61) {
+            int result = machineNOT(getGPR(rx));
+            setGPR(rx, result);
+        }
+    }
+
+    public void executeShiftRotateOperation() {
+        int opcode = (IR >> 10) & 0x3F;
+        int r = (IR >> 8) & 0x3;
+        int mode = (IR >> 7) & 0x1;
+        int dir = (IR >> 6) & 1;
+        int count = IR & 0xF;
+
+        if (opcode == 25) {
+            int result = machineShiftByCount(getGPR(r), count, dir, mode);
+            setGPR(r, result);
+        } else if (opcode == 26) {
+            int result = machineRotateByCount(getGPR(r), count, dir, mode);
+            setGPR(r, result);
         }
     }
 
@@ -219,5 +345,141 @@ public class CPU {
             ea = MBR;
         }
         return ea;
+    }
+
+    private void setCCBit(int i, int bit) {
+        int cc = getCC();
+        if (bit == 1) {
+            setCC(cc | (1 << bit));
+        } else {
+            setCC(cc & ~(1 << bit));
+        }
+    }
+
+    private void setOverflow(int bit) {
+        setCCBit(0, bit);
+    }
+
+    private void setUnderflow(int bit) {
+        setCCBit(1, bit);
+    }
+
+    private void setDivByZero(int bit) {
+        setCCBit(2, bit);
+    }
+
+    private void setEqualOrNot(int bit) {
+        setCCBit(3, bit);
+    }
+
+    private int machineAdd(int a, int b) {
+        int intResult = (int)a + (int)b;
+        short result = (short)intResult;
+        if (intResult > result) {
+            setOverflow(1);
+        } else {
+            setOverflow(0);
+        }
+        if (intResult < result) {
+            setUnderflow(1);
+        } else {
+            setUnderflow(0);
+        }
+        return (int)result;
+    }
+
+    private int machineSub(int a, int b) {
+        int intResult = (int)a - (int)b;
+        short result = (short)intResult;
+        if (intResult > result) {
+            setOverflow(1);
+        } else {
+            setOverflow(0);
+        }
+        if (intResult < result) {
+            setUnderflow(1);
+        } else {
+            setUnderflow(0);
+        }
+        return (int)result;
+    }
+
+    private int machineMult(int a, int b) {
+        int intResult = (int)a * (int)b;
+        short result = (short)intResult;
+        if (intResult > result) {
+            setOverflow(1);
+        } else {
+            setOverflow(0);
+        }
+        if (intResult < result) {
+            setUnderflow(1);
+        } else {
+            setUnderflow(0);
+        }
+        return intResult;
+    }
+
+    private int machineDiv(int a, int b) {
+        if (b == 0) {
+            setDivByZero(1);
+            return 0;
+        }
+        setDivByZero(0);
+        int quotient = a / b;
+        int remainder = a % b;
+        return (quotient << 16) | remainder;
+    }
+
+    private void machineTRR(int a, int b) {
+        if (a == b) {
+            setEqualOrNot(1);
+        } else {
+            setEqualOrNot(0);
+        }
+    }
+
+    private int machineAND(int a, int b) {
+        return a & b;
+    }
+
+    private int machineOR(int a, int b) {
+        return a | b;
+    }
+
+    private int machineNOT(int a) {
+        return (~a) & 0xFFFF;
+    }
+
+    private int machineShiftByCount(int value, int count, int dir, int mode) {
+        if (count == 0)
+            return value;
+        int result = 0;
+        if (mode == 0) { // arithmetic shift
+            if (dir == 0) { // right
+                result = value >> count;
+            } else { // left
+                result = value << count;
+            }
+        } else { // logical shift
+            if (dir == 0) {
+                result = value >>> count;
+            } else {
+                result = value << count;
+            }
+        }
+        return (short)(result & 0xFFFF);
+    }
+
+    private int machineRotateByCount(int value, int count, int dir, int mode) {
+        if (count == 0)
+            return value;
+        int val = value & 0xFFFF;
+        if (dir == 0) {
+            val = ((val >>> count) | (val << (16 - count))) & 0xFFFF;
+        } else {
+            val = ((val << count) | (val >>> (16 - count))) & 0xFFFF;
+        }
+        return val;
     }
 };
