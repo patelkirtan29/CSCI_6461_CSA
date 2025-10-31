@@ -17,10 +17,21 @@ bash build_jar.sh
 ## Run
 By running the following command, you run the simulator.
 ```bash
+<<<<<<< HEAD
 # update PATH_TO_FX to your JavaFX library path in run_jar.sh
 bash run_jar.sh
+=======
+# update PATH_TO_FX to your JavaFX library path in run_sim_jar.sh
+bash run_sim_jar.sh
+# or you can run
+java --module-path "$PATH_TO_FX" --add-modules javafx.controls,javafx.fxml -jar Simulator.jar
+>>>>>>> main
 ```
 
 ## Testing
 There is a load file containing only Load/Store instructions, "test/AL_load.txt".
+<<<<<<< HEAD
 You can load it in Simulator by inputting the path to the file, and pressing "IPL" button.
+=======
+You can load it in Simulator by inputting the path to the file, and pressing "IPL" button.
+>>>>>>> main
