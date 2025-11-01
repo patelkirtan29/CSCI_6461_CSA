@@ -1,51 +1,94 @@
 .root {
     -fx-background-color: #c8e6f3;
     -fx-font-family: "Segoe UI";
+    -fx-padding: 10;
 }
 
 .title-label {
-    -fx-font-size: 20px;
+    -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-text-fill: #003366;
 }
 
 .section-label {
-    -fx-font-weight: normal;
+    -fx-font-weight: bold;
     -fx-margin: 10px;
-    -fx-font-size: 12px;
-    -fx-pref-width: 30;
+    -fx-font-size: 14px;
 }
 
 .text-field {
-    -fx-pref-width: 60;
+    -fx-font-family: "Courier New";
+    -fx-font-size: 12px;
+    -fx-alignment: CENTER;
+    -fx-pref-width: 80;
 }
 
-.ipl-btn {
-    -fx-background-color: red;
+.text-area {
+    -fx-font-family: "Courier New";
+    -fx-font-size: 12px;
+}
+
+.table-view {
+    -fx-font-family: "Courier New";
+    -fx-font-size: 12px;
+}
+
+.table-view .column-header {
+    -fx-background-color: #4a90e2;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.table-view .table-cell {
+    -fx-alignment: CENTER;
+}
+
+.control-btn {
+    -fx-cursor: hand;
+    -fx-min-width: 80px;
+    -fx-min-height: 30px;
+    -fx-background-color: #4a90e2;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
 }
 
 .ctm-btn {
     -fx-background-color: rgb(0, 149, 255);
+    -fx-cursor: hand;
+    -fx-min-width: 25px;
+    -fx-min-height: 25px;
+    -fx-text-fill: white;
 }
 
 .btn {
     -fx-cursor: hand;
-    -fx-min-width: 5;
-    -fx-min-height: 0 !important;
-    -fx-pref-height: 16;
-    -fx-border-radius: 12;
+    -fx-border-radius: 4;
 }
 
-.ctm-btn:hover {
+.ctm-btn:hover, .control-btn:hover {
     -fx-background-color: rgb(59, 125, 171);
 }
 
-.ctm-btn:pressed,
-.ipl-btn:pressed {
+.ctm-btn:pressed, .control-btn:pressed {
     -fx-scale-x: 1.1;
     -fx-scale-y: 1.1
 }
 
-.ipl-btn:hover {
-    -fx-background-color: rgb(234, 66, 66);
+/* Removed red emphasis style for IPL (reverted to blue) */
+
+#printerOutput {
+    -fx-background-color: white;
+    -fx-border-color: #ccc;
+    -fx-border-width: 1;
+}
+
+#consoleInput {
+    -fx-background-color: white;
+    -fx-border-color: #ccc;
+    -fx-border-width: 1;
+    -fx-pref-width: 200;
+}
+
+#binary {
+    -fx-pref-width: 200;
 }

@@ -3,20 +3,20 @@ package com.gwu.simulator;
 import java.io.*;
 import java.util.Arrays;
 
-
 public class Memory {
-
     private static final int MEMORY_SIZE = 2048;
-
     private final short[] memory = new short[MEMORY_SIZE];
+    private final Cache cache;
 
     public Memory() {
+        cache = new Cache();
         reset();
     }
 
-    /** Resets all memory contents and registers to zero (power-on reset). */
+    /** Resets all memory contents, registers, and cache to zero (power-on reset). */
     public void reset() {
         Arrays.fill(memory, (short) 0);
+        cache.clear();
     }
 
     public void loadProgramFromFile(String filePath) throws IOException {
@@ -79,17 +79,35 @@ public class Memory {
         System.out.println("--------------------------------");
     }
 
-    /** Returns the word stored at an address. */
+    /** Returns the word stored at an address, checking cache first. */
     public short getValueAt(int address) {
         if (address < 0 || address >= MEMORY_SIZE)
             throw new IllegalArgumentException("Address out of range: " + address);
-        return memory[address];
+
+        // Try to read from cache first
+        Short cachedValue = cache.read(address);
+        if (cachedValue != null) {
+            return cachedValue;
+        }
+
+        // Cache miss - read from memory and update cache
+        short value = memory[address];
+        cache.write(address, value);
+        return value;
     }
 
-    /** Sets a value at an address  */
+    /** Sets a value at an address using write-through policy */
     public void setValueAt(int address, short value) {
         if (address < 0 || address >= MEMORY_SIZE)
             throw new IllegalArgumentException("Address out of range: " + address);
+        
+        // Write-through: update both cache and memory
+        cache.write(address, value);
         memory[address] = value;
+    }
+
+    /** Returns the cache for display purposes */
+    public Cache getCache() {
+        return cache;
     }
 }

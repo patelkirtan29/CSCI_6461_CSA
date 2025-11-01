@@ -1,0 +1,56 @@
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;project name="CSCI6461" default="compile" basedir="."&gt;
+    &lt;property name="src.dir" value="src/main/java"/&gt;
+    &lt;property name="resources.dir" value="src/main/resources"/&gt;
+    &lt;property name="build.dir" value="build"/&gt;
+    &lt;property name="classes.dir" value="${build.dir}/classes"/&gt;
+    &lt;property name="jar.dir" value="${build.dir}/jar"/&gt;
+    &lt;property name="javafx.sdk" value="C:/Users/yabid/Downloads/openjfx-25.0.1_windows-x64_bin-sdk/javafx-sdk-25.0.1"/&gt;
+    &lt;property name="main.class" value="com.gwu.assembler.SGUI"/&gt;
+
+    &lt;path id="classpath"&gt;
+        &lt;fileset dir="${javafx.sdk}/lib"&gt;
+            &lt;include name="*.jar"/&gt;
+        &lt;/fileset&gt;
+    &lt;/path&gt;
+
+    &lt;target name="clean"&gt;
+        &lt;delete dir="${build.dir}"/&gt;
+    &lt;/target&gt;
+
+    &lt;target name="init"&gt;
+        &lt;mkdir dir="${classes.dir}"/&gt;
+        &lt;mkdir dir="${jar.dir}"/&gt;
+    &lt;/target&gt;
+
+    &lt;target name="compile" depends="init"&gt;
+        &lt;javac srcdir="${src.dir}" destdir="${classes.dir}" includeantruntime="false"&gt;
+            &lt;classpath refid="classpath"/&gt;
+            &lt;compilerarg line="--module-path ${javafx.sdk}/lib --add-modules javafx.controls,javafx.fxml"/&gt;
+        &lt;/javac&gt;
+        &lt;copy todir="${classes.dir}"&gt;
+            &lt;fileset dir="${resources.dir}"/&gt;
+        &lt;/copy&gt;
+    &lt;/target&gt;
+
+    &lt;target name="jar" depends="compile"&gt;
+        &lt;jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}"&gt;
+            &lt;manifest&gt;
+                &lt;attribute name="Main-Class" value="${main.class}"/&gt;
+            &lt;/manifest&gt;
+        &lt;/jar&gt;
+    &lt;/target&gt;
+
+    &lt;target name="run" depends="jar"&gt;
+        &lt;java classname="${main.class}" fork="true"&gt;
+            &lt;classpath&gt;
+                &lt;path refid="classpath"/&gt;
+                &lt;path location="${jar.dir}/${ant.project.name}.jar"/&gt;
+            &lt;/classpath&gt;
+            &lt;jvmarg value="--module-path"/&gt;
+            &lt;jvmarg value="${javafx.sdk}/lib"/&gt;
+            &lt;jvmarg value="--add-modules"/&gt;
+            &lt;jvmarg value="javafx.controls,javafx.fxml"/&gt;
+        &lt;/java&gt;
+    &lt;/target&gt;
+&lt;/project&gt;

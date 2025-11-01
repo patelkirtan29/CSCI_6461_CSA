@@ -1,40 +1,54 @@
 package com.gwu.assembler;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Button;
+import javafx.scene.control.*;
 
 import com.gwu.simulator.CPU;
 import com.gwu.simulator.Memory;
+import com.gwu.simulator.Cache.CacheLine;
 
 public class SGUIController {
     private CPU cpu;
     private Memory memory;
+    private StringBuilder printerBuffer = new StringBuilder();
+    // FIFO queue for console input values (octal words)
+    private final Deque<Integer> consoleInputQueue = new ArrayDeque<>();
 
     @FXML private TextField gpr0, gpr1, gpr2, gpr3;
     @FXML private TextField ixr1, ixr2, ixr3;
     @FXML private TextField mar, mbr, pc, ir;
+    @FXML private TextField cc, mfr;  // New status registers
     @FXML private TextField octalInput, binary;
     @FXML private TextField programFile;
+    @FXML private TextField consoleInput;
+    @FXML private TextArea printerOutput;
     @FXML private Button singleStepBtn, runBtn, iplBtn, haltBtn;
     @FXML private Button loadBtn, loadPlusBtn, storeBtn, storePlusBtn;
     @FXML private Button gpr0Btn, gpr1Btn, gpr2Btn, gpr3Btn;
     @FXML private Button ixr1Btn, ixr2Btn, ixr3Btn;
     @FXML private Button pcBtn, marBtn, mbrBtn, irBtn;
+    @FXML private TextArea cacheContent;
 
     @FXML
     public void initialize() {
         memory = new Memory();
         cpu = new CPU(memory);
+        // Wire UI I/O to CPU
+        cpu.setConsoleInputSupplier(this::readFromConsole);
+        cpu.setPrinterConsumer(this::printToOutput);
+        // No table; cache content shown in a text area
         setupListeners();
         setupIPLProgram();
+        updateDisplays();
     }
 
     private void setupListeners() {
-        // Octal input listener
+        // Existing listeners
         octalInput.textProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal.matches("[0-7]*")) {
                 updateBinaryDisplay(newVal);
@@ -42,6 +56,9 @@ public class SGUIController {
                 octalInput.setText(oldVal);
             }
         });
+
+        // Console input handler
+        consoleInput.setOnAction(e -> handleConsoleInput());
 
         // GPR button handlers
         gpr0Btn.setOnAction(e -> updateRegister(val -> cpu.setGPR(0, val)));
@@ -73,6 +90,31 @@ public class SGUIController {
         iplBtn.setOnAction(e -> handleIPL());
     }
 
+    private void handleConsoleInput() {
+        try {
+            int value = Integer.parseInt(consoleInput.getText(), 8);  // Parse octal input
+            consoleInputQueue.addLast(value);
+            printToOutput("Input queued: " + String.format("%o", value));
+            consoleInput.clear();
+        } catch (NumberFormatException e) {
+            printToOutput("Error: Invalid octal number");
+        }
+    }
+
+    public void printToOutput(String text) {
+        if (Platform.isFxApplicationThread()) {
+            printerOutput.appendText(text + "\n");
+            printerBuffer.append(text).append("\n");
+        } else {
+            Platform.runLater(() -> printToOutput(text));
+        }
+    }
+
+    public int readFromConsole() {
+        Integer v = consoleInputQueue.pollFirst();
+        return v != null ? v : 0;  // Default value if no input available
+    }
+
     private void handleSingleStep() {
         cpu.step();
         updateDisplays();
@@ -81,7 +123,7 @@ public class SGUIController {
     private void handleRun() {
         cpu.unhalt(); // Make sure CPU is not halted before running
         cpu.run(() -> {
-            javafx.application.Platform.runLater(this::updateDisplays);
+            Platform.runLater(this::updateDisplays);
         });
     }
 
@@ -98,7 +140,7 @@ public class SGUIController {
     private void setupIPLProgram() {
         String programPath = programFile.getText();
         if (programPath == null || programPath.trim().isEmpty()) {
-            System.err.println("No program file specified");
+            printToOutput("No program file specified");
             return;
         }
 
@@ -107,8 +149,9 @@ public class SGUIController {
             memory.loadProgramFromFile(programPath);
             cpu.reset();  // Reset CPU state after loading program
             updateDisplays();
+            printToOutput("Program loaded successfully: " + programPath);
         } catch (IOException e) {
-            System.err.println("Error loading program from file '" + programPath + "': " + e.getMessage());
+            printToOutput("Error loading program: " + e.getMessage());
         }
     }
     
@@ -137,6 +180,10 @@ public class SGUIController {
         ir.setText(String.format("%o", cpu.getIR()));
         mar.setText(String.format("%o", cpu.getMAR()));
         mbr.setText(String.format("%o", cpu.getMBR()));
+        cc.setText(String.format("%o", cpu.getCC()));
+        mfr.setText(String.format("%o", cpu.getMFR()));
+
+        updateCacheDisplay();
     }
 
 
@@ -154,6 +201,22 @@ public class SGUIController {
         } catch (NumberFormatException e) {
             binary.setText("Invalid octal input");
         }
+    }
+
+    private void updateCacheDisplay() {
+        if (cacheContent == null) return;
+        StringBuilder sb = new StringBuilder();
+        CacheLine[] lines = memory.getCache().getLines();
+        for (int i = 0; i < lines.length; i++) {
+            CacheLine line = lines[i];
+            if (line.isValid()) {
+                sb.append(String.format("%02o: %06o  %06o", i, line.getTag(), line.getData() & 0xFFFF));
+            } else {
+                sb.append(String.format("%02o: ------  ------", i));
+            }
+            sb.append('\n');
+        }
+        cacheContent.setText(sb.toString());
     }
 
 

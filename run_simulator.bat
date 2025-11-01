@@ -1,6 +1,6 @@
 @echo off
 REM change this path to your JavaFX SDK lib directory
-set PATH_TO_FX="D:\JavaFx\javafx-sdk-25\lib"
+set PATH_TO_FX="C:\Users\yabid\Downloads\openjfx-25.0.1_windows-x64_bin-sdk\javafx-sdk-25.0.1\lib"
 
 REM Clean and recreate bin directory
 rmdir /s /q bin\classes 2>nul
