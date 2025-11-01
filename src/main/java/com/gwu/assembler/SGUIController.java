@@ -18,6 +18,8 @@ public class SGUIController {
     private StringBuilder printerBuffer = new StringBuilder();
     // FIFO queue for console input values (octal words)
     private final Deque<Integer> consoleInputQueue = new ArrayDeque<>();
+    // Prevent duplicate labeled prints after program halt
+    private boolean printedSummaryThisRun = false;
 
     @FXML private TextField gpr0, gpr1, gpr2, gpr3;
     @FXML private TextField ixr1, ixr2, ixr3;
@@ -79,6 +81,14 @@ public class SGUIController {
         mbrBtn.setOnAction(e -> updateRegister(cpu::setMBR));
         irBtn.setOnAction(e -> updateRegister(cpu::setIR));
 
+        // Allow direct editing of PC field (octal). Commit on Enter or when field loses focus
+        pc.setOnAction(e -> applyPcFromField());
+        pc.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+            if (!isFocused) {
+                applyPcFromField();
+            }
+        });
+
         // Memory operation buttons
         loadBtn.setOnAction(e -> loadFromMemory());
         loadPlusBtn.setOnAction(e -> loadFromMemoryAndIncrement());
@@ -114,7 +124,7 @@ public class SGUIController {
 
     public int readFromConsole() {
         Integer v = consoleInputQueue.pollFirst();
-        return v != null ? v : 0;  // Default value if no input available
+        return v != null ? v : -1;  // Return -1 if no input available (signal to wait)
     }
 
     private void handleSingleStep() {
@@ -123,6 +133,7 @@ public class SGUIController {
     }
 
     private void handleRun() {
+        printedSummaryThisRun = false;
         cpu.unhalt(); // Make sure CPU is not halted before running
         cpu.run(() -> {
             Platform.runLater(this::updateDisplays);
@@ -150,8 +161,11 @@ public class SGUIController {
             memory.reset(); // Clear memory before loading new program
             memory.loadProgramFromFile(programPath);
             cpu.reset();  // Reset CPU state after loading program
+            cpu.setPC(64); // 0o100 - program entry point
+            printedSummaryThisRun = false;
             updateDisplays();
             printToOutput("Program loaded successfully: " + programPath);
+            printToOutput("PC set to 0o100 (program start address)");
         } catch (IOException e) {
             printToOutput("Error loading program: " + e.getMessage());
         }
@@ -186,6 +200,18 @@ public class SGUIController {
         mfr.setText(String.format("%o", cpu.getMFR()));
 
         updateCacheDisplay();
+
+        // Append labeled results once when CPU halts (Program1: search at M[012], best at M[007])
+        if (cpu.isHalted() && !printedSummaryThisRun) {
+            try {
+                int search = Short.toUnsignedInt(memory.getValueAt(10)); // 012 octal
+                int best = Short.toUnsignedInt(memory.getValueAt(7));  // 007 octal
+                printToOutput(String.format("search value: %o", search));
+                printToOutput(String.format("closest value: %o", best));
+            } catch (Exception ignore) {
+            }
+            printedSummaryThisRun = true;
+        }
     }
 
 
@@ -253,6 +279,30 @@ public class SGUIController {
             } catch (NumberFormatException e) {
                 System.err.println("Invalid octal input: " + octalValue);
             }
+        }
+    }
+
+    // Parse PC TextField as octal and set CPU PC; revert on invalid input
+    private void applyPcFromField() {
+        String text = pc.getText();
+        if (text == null) return;
+        text = text.trim();
+        if (text.isEmpty()) {
+            // Revert to current PC if cleared
+            pc.setText(String.format("%o", cpu.getPC()));
+            return;
+        }
+        if (!text.matches("[0-7]+")) {
+            // Invalid - revert
+            pc.setText(String.format("%o", cpu.getPC()));
+            return;
+        }
+        try {
+            int value = Integer.parseInt(text, 8);
+            cpu.setPC(value);
+            updateDisplays();
+        } catch (NumberFormatException ex) {
+            pc.setText(String.format("%o", cpu.getPC()));
         }
     }
 }

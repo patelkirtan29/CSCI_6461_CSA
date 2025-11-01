@@ -79,7 +79,7 @@
                 <VBox spacing="8">
                     <HBox spacing="8" alignment="CENTER_LEFT">
                         <Label text="PC" styleClass="section-label" />
-                        <TextField fx:id="pc" prefWidth="80" editable="false"/>
+                        <TextField fx:id="pc" prefWidth="80" editable="true"/>
                         <Button fx:id="pcBtn" styleClass="ctm-btn" />
                     </HBox>
                     <HBox spacing="8" alignment="CENTER_LEFT">

@@ -39,7 +39,7 @@ public class CPU {
                 step();
                 updateDisplay.run();
                 try {
-                    Thread.sleep(500); // Small delay
+                    Thread.sleep(100); // Faster execution - 100ms per instruction
                 } catch (InterruptedException e) {
                     break;
                 }
@@ -473,7 +473,12 @@ public class CPU {
             case 61: // IN
                 if (devid == 0 && consoleInputSupplier != null) { // Console keyboard
                     int input = consoleInputSupplier.get();
-                    setGPR(r, input);
+                    // If input is -1, it means no input available - wait by decrementing PC
+                    if (input == -1) {
+                        setPC(PC - 1); // Retry this instruction next cycle
+                    } else {
+                        setGPR(r, input);
+                    }
                 }
                 break;
                 

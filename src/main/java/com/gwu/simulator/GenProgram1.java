@@ -114,11 +114,11 @@ public class GenProgram1 {
         items.add(new Item(a, W(2,2,0,0,5), "STR R2,5")); a++;
         // SOB R1 -> loop2 (indirect)
         items.add(new Item(a, SOBW(1,0,1, ADDR_LOOP2), "SOB R1,@ADDR_LOOP2")); a++;
-        // After loop: print search and bestVal
-        items.add(new Item(a, OUTW(3,1), "OUT R3,1 ; print search")); a++;
-        items.add(new Item(a, W(1,0,0,0,7), "LDR R0,7")); a++;
-        items.add(new Item(a, OUTW(0,1), "OUT R0,1 ; print best")); a++;
-        items.add(new Item(a, W(0,0,0,0,0), "HLT")); a++;
+    // After loop: print search and bestVal
+    items.add(new Item(a, OUTW(3,1), "OUT R3,1 ; print search")); a++;
+    items.add(new Item(a, W(1,0,0,0,7), "LDR R0,7")); a++;
+    items.add(new Item(a, OUTW(0,1), "OUT R0,1 ; print best")); a++;
+    items.add(new Item(a, W(0,0,0,0,0), "HLT")); a++;
 
         // ABS_FIX block (compute two's complement of R0 and store diff to 11, then branch back to compare path)
         int absFix = a;
