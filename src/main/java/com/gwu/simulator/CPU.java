@@ -266,15 +266,29 @@ public class CPU {
     }
 
     private void readMemory(int address) {
-        setMAR(address);
-        int content = memory.getValueAt(MAR);
-        setMBR(content);
+        try {
+            setMAR(address);
+            int content = memory.getValueAt(MAR);
+            setMBR(content);
+        } catch (IllegalArgumentException ex) {
+            // Memory bounds fault: set MFR bit (use 0x4) and halt
+            setMFR(getMFR() | 0x4);
+            System.err.println("Memory read fault: " + ex.getMessage());
+            halt();
+        }
     }
 
     private void writeMemory(int address, int value) {
-        setMAR(address);
-        setMBR(value);
-        memory.setValueAt(MAR, (short) MBR);
+        try {
+            setMAR(address);
+            setMBR(value);
+            memory.setValueAt(MAR, (short) MBR);
+        } catch (IllegalArgumentException ex) {
+            // Memory bounds fault: set MFR bit (use 0x4) and halt
+            setMFR(getMFR() | 0x4);
+            System.err.println("Memory write fault: " + ex.getMessage());
+            halt();
+        }
     }
 
     private int getEA(int i, int ix, int address) {
