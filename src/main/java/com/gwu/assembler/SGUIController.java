@@ -50,9 +50,11 @@ public class SGUIController {
     private void setupListeners() {
         // Existing listeners
         octalInput.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal.matches("[0-7]*")) {
+            // Allow empty string or valid octal digits
+            if (newVal.isEmpty() || newVal.matches("[0-7]+")) {
                 updateBinaryDisplay(newVal);
             } else {
+                // Revert to old value if invalid
                 octalInput.setText(oldVal);
             }
         });
