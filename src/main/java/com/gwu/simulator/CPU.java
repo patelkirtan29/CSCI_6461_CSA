@@ -484,8 +484,18 @@ public class CPU {
                 
             case 62: // OUT
                 if (devid == 1 && printerConsumer != null) { // Console printer
-                    // Output as octal per UI convention
-                    String text = String.format("%o", getGPR(r));
+                    // Output as DECIMAL (matching input format)
+                    int value = getGPR(r);
+                    String text;
+                    if ((value & 0x8000) != 0) {
+                        // Negative in two's complement (bit 15 set)
+                        // Convert to signed and display as decimal
+                        int signed = (short) value; // Cast to signed 16-bit
+                        text = String.valueOf(signed); // Display as decimal
+                    } else {
+                        // Positive value - display as decimal
+                        text = String.valueOf(value);
+                    }
                     printerConsumer.accept(text);
                 }
                 break;

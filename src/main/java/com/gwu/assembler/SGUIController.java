@@ -18,8 +18,11 @@ public class SGUIController {
     private StringBuilder printerBuffer = new StringBuilder();
     // FIFO queue for console input values (octal words)
     private final Deque<Integer> consoleInputQueue = new ArrayDeque<>();
-    // Prevent duplicate labeled prints after program halt
-    private boolean printedSummaryThisRun = false;
+    // Track input flow per run
+    private int inputsConsumedThisRun = 0;
+    private boolean waitingForInputAnnounced = false;
+    // Print a labeled summary once per run when CPU halts
+    private boolean summaryPrinted = false;
 
     @FXML private TextField gpr0, gpr1, gpr2, gpr3;
     @FXML private TextField ixr1, ixr2, ixr3;
@@ -52,8 +55,8 @@ public class SGUIController {
     private void setupListeners() {
         // Existing listeners
         octalInput.textProperty().addListener((obs, oldVal, newVal) -> {
-            // Allow empty string or valid octal digits
-            if (newVal.isEmpty() || newVal.matches("[0-7]+")) {
+            // Allow empty string, optional minus sign, and valid octal digits
+            if (newVal.isEmpty() || newVal.matches("-?[0-7]+")) {
                 updateBinaryDisplay(newVal);
             } else {
                 // Revert to old value if invalid
@@ -103,14 +106,60 @@ public class SGUIController {
     }
 
     private void handleConsoleInput() {
-        try {
-            int value = Integer.parseInt(consoleInput.getText(), 8);  // Parse octal input
-            consoleInputQueue.addLast(value);
-            printToOutput("Input queued: " + String.format("%o", value));
+        // Accept one or many decimal values separated by spaces/commas/newlines
+        if (consoleInputQueue.size() >= 21) {
+            printToOutput("Error: All 21 values already entered (20 list + 1 search). Click Run to execute.");
             consoleInput.clear();
-        } catch (NumberFormatException e) {
-            printToOutput("Error: Invalid octal number");
+            return;
         }
+
+        String input = consoleInput.getText();
+        if (input == null || input.trim().isEmpty()) {
+            return;
+        }
+
+        String[] tokens = input.trim().split("[\\s,]+");
+        int sizeBefore = consoleInputQueue.size();
+        int added = 0;
+        int skippedInvalid = 0;
+        int ignoredExtra = 0;
+
+        for (String t : tokens) {
+            if (consoleInputQueue.size() >= 21) {
+                ignoredExtra += 1;
+                continue;
+            }
+            try {
+                int value = Integer.parseInt(t, 10);
+                consoleInputQueue.addLast(value);
+                added++;
+            } catch (NumberFormatException ex) {
+                skippedInvalid++;
+            }
+        }
+
+        if (added == 1) {
+            int last = consoleInputQueue.peekLast();
+            printToOutput("Input queued: " + last);
+        } else if (added > 1) {
+            printToOutput(String.format("Bulk input queued: %d values", added));
+        }
+        if (skippedInvalid > 0) {
+            printToOutput(String.format("Note: Skipped %d invalid value(s)", skippedInvalid));
+        }
+        if (ignoredExtra > 0) {
+            printToOutput(String.format("Note: Ignored %d extra value(s) beyond 21 total inputs", ignoredExtra));
+        }
+
+        int sizeAfter = consoleInputQueue.size();
+        if (sizeBefore < 20 && sizeAfter >= 20 && sizeAfter < 21) {
+            printToOutput(">>> 20 values entered. Now enter the SEARCH VALUE <<<");
+        }
+        if (sizeAfter >= 21) {
+            printToOutput(">>> All 21 values entered. Click Run to execute. <<<");
+        }
+
+        consoleInput.clear();
     }
 
     public void printToOutput(String text) {
@@ -124,7 +173,26 @@ public class SGUIController {
 
     public int readFromConsole() {
         Integer v = consoleInputQueue.pollFirst();
-        return v != null ? v : -1;  // Return -1 if no input available (signal to wait)
+        if (v != null) {
+            inputsConsumedThisRun++;
+            waitingForInputAnnounced = false;
+            return v;
+        }
+        
+        // Check if we've already consumed all expected inputs for Program1
+        if (inputsConsumedThisRun >= 21) {
+            // All inputs consumed, don't ask for more
+            // This prevents "Waiting for input #22" message
+            return -1;  // Signal CPU to retry (program should be done by now)
+        }
+        
+        // No input available: announce once per wait state
+        if (!waitingForInputAnnounced) {
+            int nextIdx = inputsConsumedThisRun + 1;
+            printToOutput(String.format("Waiting for input #%d (enter 21 values: 20 list + 1 search)", nextIdx));
+            waitingForInputAnnounced = true;
+        }
+        return -1;  // Signal CPU to retry
     }
 
     private void handleSingleStep() {
@@ -133,8 +201,16 @@ public class SGUIController {
     }
 
     private void handleRun() {
-        printedSummaryThisRun = false;
-        cpu.unhalt(); // Make sure CPU is not halted before running
+        inputsConsumedThisRun = 0;
+        waitingForInputAnnounced = false;
+        summaryPrinted = false;
+        // If previous program halted, restart from program entry without requiring IPL
+        if (cpu.isHalted()) {
+            cpu.reset();
+            cpu.setPC(64); // 0o100
+            printToOutput("Restarting program from 0o100. Enter 21 inputs if not already queued, then wait for output.");
+        }
+        cpu.unhalt(); // Ensure CPU is not halted before running
         cpu.run(() -> {
             Platform.runLater(this::updateDisplays);
         });
@@ -162,10 +238,15 @@ public class SGUIController {
             memory.loadProgramFromFile(programPath);
             cpu.reset();  // Reset CPU state after loading program
             cpu.setPC(64); // 0o100 - program entry point
-            printedSummaryThisRun = false;
+            // Clear any previously queued console inputs for a fresh run
+            consoleInputQueue.clear();
+            inputsConsumedThisRun = 0;
+            waitingForInputAnnounced = false;
+            summaryPrinted = false;
             updateDisplays();
             printToOutput("Program loaded successfully: " + programPath);
             printToOutput("PC set to 0o100 (program start address)");
+            printToOutput("Ready: Enter 20 list values, then enter the SEARCH value and click Run.");
         } catch (IOException e) {
             printToOutput("Error loading program: " + e.getMessage());
         }
@@ -201,17 +282,34 @@ public class SGUIController {
 
         updateCacheDisplay();
 
-        // Append labeled results once when CPU halts (Program1: search at M[012], best at M[007])
-        if (cpu.isHalted() && !printedSummaryThisRun) {
+        // When the program halts, append a clear, labeled summary using the last two numeric OUTs
+        if (cpu.isHalted() && !summaryPrinted) {
             try {
-                int search = Short.toUnsignedInt(memory.getValueAt(10)); // 012 octal
-                int best = Short.toUnsignedInt(memory.getValueAt(7));  // 007 octal
-                printToOutput(String.format("search value: %o", search));
-                printToOutput(String.format("closest value: %o", best));
+                // Find the last two numeric lines printed by the program (OUT outputs)
+                String[] lines = printerBuffer.toString().split("\n");
+                Integer last = null, secondLast = null;
+                for (int i = lines.length - 1; i >= 0; i--) {
+                    String line = lines[i].trim();
+                    if (line.matches("-?\\d+")) {
+                        if (last == null) {
+                            last = Integer.parseInt(line);
+                        } else {
+                            secondLast = Integer.parseInt(line);
+                            break;
+                        }
+                    }
+                }
+                if (last != null && secondLast != null) {
+                    int searchVal = secondLast; // Program prints: 20 list, then search, then closest; so secondLast is search
+                    int closestVal = last;      // last is closest
+                    printToOutput("Search number, " + searchVal);
+                    printToOutput("Closest number, " + closestVal);
+                }
             } catch (Exception ignore) {
             }
-            printedSummaryThisRun = true;
+            summaryPrinted = true;
         }
+
     }
 
 
@@ -222,8 +320,13 @@ public class SGUIController {
             return;
         }
         try {
-            int octalValue = Integer.parseInt(octalStr, 8);
-            String binaryStr = String.format("%16s", Integer.toBinaryString(octalValue))
+            boolean isNegative = octalStr.startsWith("-");
+            String absValue = isNegative ? octalStr.substring(1) : octalStr;
+            
+            int octalValue = Integer.parseInt(absValue, 8);
+            if (isNegative) octalValue = -octalValue;
+            
+            String binaryStr = String.format("%16s", Integer.toBinaryString(octalValue & 0xFFFF))
                                    .replace(' ', '0');
             binary.setText(binaryStr);
         } catch (NumberFormatException e) {
@@ -238,9 +341,10 @@ public class SGUIController {
         for (int i = 0; i < lines.length; i++) {
             CacheLine line = lines[i];
             if (line.isValid()) {
-                sb.append(String.format("%02o: %06o  %06o", i, line.getTag(), line.getData() & 0xFFFF));
+                // Index label in decimal (00-15), tag and data remain octal
+                sb.append(String.format("%02d: %06o  %06o", i, line.getTag(), line.getData() & 0xFFFF));
             } else {
-                sb.append(String.format("%02o: ------  ------", i));
+                sb.append(String.format("%02d: ------  ------", i));
             }
             sb.append('\n');
         }
@@ -273,7 +377,12 @@ public class SGUIController {
         String octalValue = octalInput.getText();
         if (!octalValue.isEmpty()) {
             try {
-                int value = Integer.parseInt(octalValue, 8);
+                boolean isNegative = octalValue.startsWith("-");
+                String absValue = isNegative ? octalValue.substring(1) : octalValue;
+                
+                int value = Integer.parseInt(absValue, 8);
+                if (isNegative) value = -value;
+                
                 setter.accept(value);
                 updateDisplays();
             } catch (NumberFormatException e) {
