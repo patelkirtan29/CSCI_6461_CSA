@@ -134,7 +134,8 @@ public class GenProgram1 {
         items.add(new Item(a, W(2,2,0,0,6), "STR R2,6")); a++;
         items.add(new Item(a, W(1,2,0,1,5), "LDR R2,(5)")); a++;
         items.add(new Item(a, W(2,2,0,0,7), "STR R2,7")); a++;
-        // Fall-through to skipUpd (no separate jump needed)
+        // Jump back to skipUpd (needed because skipUpd is at lower address than absFix)
+        items.add(new Item(a, W(13,0,0,1,ADDR_SKIP_UPD), "JMA @ADDR_SKIP_UPD")); a++;
 
         // Fill the address constants now that labels are known
         items.add(new Item(ADDR_LOOP_IN, loopIn, "ADDR_LOOP_IN = "+toOct(loopIn,3)));
