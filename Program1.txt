@@ -1,9 +1,68 @@
-; Demonstration Program for LDR and STR
-; Shows direct, indirect, and indexed addressing
-
-START:  LDR R0, 100      ; Direct addressing
-        STR R0, 200      ; Store direct
-        LDR R1, 300, I   ; Indirect
-        STR R1, 400, X   ; Indexed
-        LDR R2, 500      ; Another load
-        HLT              ; Stop program
+001 000024    # N = 20
+002 001000    # BASE = 0o1000
+003 000100    # CODE = 0o100
+005 001000    # PTR = 0o1000
+006 077777    # BESTDIFF = 077777
+007 000000    # BESTVAL = 0
+012 000000    # SEARCH TMP
+013 000000    # DIFF TMP
+014 000103    # ADDR_LOOP_IN = 103
+015 000131    # ADDR_LOOP2 = 131
+016 000154    # ADDR_ABS_FIX = 154
+017 000144    # ADDR_SKIP_UPD = 144
+020 000114    # ADDR_LOOP_PRINT = 114
+100 102102    # LDX X1,2
+101 102203    # LDX X2,3
+102 002401    # LDR R1,1
+103 172000    # IN R0,0
+104 004045    # STR R0,(5)
+105 003005    # LDR R2,5
+106 015001    # AIR R2,1
+107 005005    # STR R2,5
+110 040454    # SOB R1,@ADDR_LOOP_IN
+111 002401    # LDR R1,1 ; reload count
+112 003002    # LDR R2,2 ; BASE
+113 005005    # STR R2,5 ; reset PTR
+114 002045    # LDR R0,(5)
+115 174001    # OUT R0,1 ; print value
+116 003005    # LDR R2,5
+117 015001    # AIR R2,1
+120 005005    # STR R2,5
+121 040460    # SOB R1,@ADDR_LOOP_PRINT
+122 003002    # LDR R2,2
+123 005005    # STR R2,5
+124 172300    # IN R3,0  ; search
+125 005412    # STR R3,10 ; save search
+126 002401    # LDR R1,1
+127 003002    # LDR R2,2
+130 005005    # STR R2,5
+131 002045    # LDR R0,(5)
+132 012012    # SMR R0,10  ; R0-=search
+133 031456    # JCC N,@ABS_FIX
+134 004013    # STR R0,11 ; save diff
+135 003006    # LDR R2,6 ; bestDiff
+136 013013    # SMR R2,11
+137 031457    # JCC N,@SKIP_UPD
+140 003013    # LDR R2,11
+141 005006    # STR R2,6 ; bestDiff=diff
+142 003045    # LDR R2,(5) ; current
+143 005007    # STR R2,7 ; bestVal=current
+144 003005    # LDR R2,5
+145 015001    # AIR R2,1
+146 005005    # STR R2,5
+147 040455    # SOB R1,@ADDR_LOOP2
+150 174301    # OUT R3,1 ; print search
+151 002007    # LDR R0,7
+152 174001    # OUT R0,1 ; print best
+153 000000    # HLT
+154 062000    # NOT R0
+155 014001    # AIR R0,1 ; two's comp
+156 004013    # STR R0,11 ; save diff
+157 003006    # LDR R2,6 ; bestDiff
+160 013013    # SMR R2,11
+161 031457    # JCC N,@SKIP_UPD
+162 003013    # LDR R2,11
+163 005006    # STR R2,6
+164 003045    # LDR R2,(5)
+165 005007    # STR R2,7
+166 032057    # JMA @ADDR_SKIP_UPD
