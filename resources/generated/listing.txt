@@ -1,0 +1,97 @@
+; ==============================
+; Program2.asm - Project III skeleton
+; ==============================
+; Data section: sentence pointers/buffers + word buffer + flags
+; ==============================
+LOC 512                 ; Data start (decimal 512)
+                      
+001000 000000 Sentence1:   Data 0     ; Will be filled by TRAP 1
+001001 000000 Sentence2:   Data 0
+001002 000000 Sentence3:   Data 0
+001003 000000 Sentence4:   Data 0
+001004 000000 Sentence5:   Data 0
+001005 000000 Sentence6:   Data 0
+                      
+001006 000000 WordBuf:     Data 0     ; Buffer / pointer for input word (TRAP 2)
+                      
+001007 000000 FoundFlag:   Data 0     ; 0 = not found, 1 = found
+001010 000000 FoundSent:   Data 0     ; sentence number (1..6)
+001011 000000 FoundWord:   Data 0     ; word number in that sentence
+                      
+001012 000000 ConstZero:   Data 0
+001013 000001 ConstOne:    Data 1
+                      
+; ==============================
+        ; Code section
+; ==============================
+LOC 600                 ; Code start
+                      
+001130 006000 Start: LDA 0,0,Sentence1    ; R0 = &Sentence1
+001131 060400        TRAP 1               ; OS/TRAP loads sentence 1
+                      
+001132 006001        LDA 0,0,Sentence2
+001133 060400        TRAP 1
+                      
+001134 006002        LDA 0,0,Sentence3
+001135 060400        TRAP 1
+                      
+001136 006003        LDA 0,0,Sentence4
+001137 060400        TRAP 1
+                      
+001140 006004        LDA 0,0,Sentence5
+001141 060400        TRAP 1
+                      
+001142 006005        LDA 0,0,Sentence6
+001143 060400        TRAP 1
+                      
+       ; Print all 6 sentences (same style you had before)
+001144 006400        LDA 1,0,Sentence1    ; R1 = &Sentence1
+001145 144401        OUT 1,1              ; device 1 prints sentence 1
+                      
+001146 006401        LDA 1,0,Sentence2
+001147 144401        OUT 1,1
+                      
+001150 006402        LDA 1,0,Sentence3
+001151 144401        OUT 1,1
+                      
+001152 006403        LDA 1,0,Sentence4
+001153 144401        OUT 1,1
+                      
+001154 006404        LDA 1,0,Sentence5
+001155 144401        OUT 1,1
+                      
+001156 006405        LDA 1,0,Sentence6
+001157 144401        OUT 1,1
+                      
+       ; (Optional) you can define and print a "ENTER WORD:" prompt
+       ; string later, using OUT and a pointer, just like sentences.
+                      
+001160 006006 ReadWord: LDA 0,0,WordBuf   ; R0 = &WordBuf
+001161 061000           TRAP 2            ; TRAP 2 reads the search word into WordBuf
+                      
+001162 002412 InitFlags: LDR 1,0,ConstZero ; R1 = 0
+001163 004407            STR 1,0,FoundFlag
+001164 004410            STR 1,0,FoundSent
+001165 004411            STR 1,0,FoundWord
+                      
+           ; ===============================================
+           ; TODO: Add search + result reporting logic here
+           ; After this point, you’ll:
+           ;   - Loop over Sentence1..Sentence6
+           ;   - For each sentence, loop over words
+           ;   - Compare each word to the input word in WordBuf
+           ;   - If found:
+           ;       * FoundFlag = 1
+           ;       * FoundSent = sentence number
+           ;       * FoundWord = word number
+           ;       * print result using OUT/TRAP
+           ;   - If not found after all sentences:
+           ;       * print "WORD NOT FOUND"
+                     ;
+           ; Keep every label on same line as its instruction.
+            ; Example:
+           ;   SentenceLoop: LDR 0,0,ConstZero
+           ;   NextWord:    LDR 0,0,ConstZero
+           ; ===============================================
+                      
+001166 000000 EndProgram: HLT           ; Stop execution
