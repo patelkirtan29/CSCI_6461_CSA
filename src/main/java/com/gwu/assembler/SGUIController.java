@@ -106,60 +106,70 @@ public class SGUIController {
     }
 
     private void handleConsoleInput() {
-        // Accept one or many decimal values separated by spaces/commas/newlines
-        if (consoleInputQueue.size() >= 21) {
-            printToOutput("Error: All 21 values already entered (20 list + 1 search). Click Run to execute.");
-            consoleInput.clear();
-            return;
-        }
-
         String input = consoleInput.getText();
         if (input == null || input.trim().isEmpty()) {
             return;
         }
 
-        String[] tokens = input.trim().split("[\\s,]+");
-        int sizeBefore = consoleInputQueue.size();
-        int added = 0;
-        int skippedInvalid = 0;
-        int ignoredExtra = 0;
-
-        for (String t : tokens) {
-            if (consoleInputQueue.size() >= 21) {
-                ignoredExtra += 1;
-                continue;
-            }
-            try {
-                int value = Integer.parseInt(t, 10);
-                consoleInputQueue.addLast(value);
-                added++;
-            } catch (NumberFormatException ex) {
-                skippedInvalid++;
-            }
-        }
-
-        if (added == 1) {
-            int last = consoleInputQueue.peekLast();
-            printToOutput("Input queued: " + last);
-        } else if (added > 1) {
-            printToOutput(String.format("Bulk input queued: %d values", added));
-        }
-        if (skippedInvalid > 0) {
-            printToOutput(String.format("Note: Skipped %d invalid value(s)", skippedInvalid));
-        }
-        if (ignoredExtra > 0) {
-            printToOutput(String.format("Note: Ignored %d extra value(s) beyond 21 total inputs", ignoredExtra));
-        }
-
-        int sizeAfter = consoleInputQueue.size();
-        if (sizeBefore < 20 && sizeAfter >= 20 && sizeAfter < 21) {
-            printToOutput(">>> 20 values entered. Now enter the SEARCH VALUE <<<");
-        }
-        if (sizeAfter >= 21) {
-            printToOutput(">>> All 21 values entered. Click Run to execute. <<<");
+        // Check if this is Program2 (word search) or Program1 (numeric)
+        // Try to parse as integer first (Program1)
+        try {
+            int value = Integer.parseInt(input.trim(), 10);
+            consoleInputQueue.addLast(value);
+            printToOutput("Input queued: " + value);
+        } catch (NumberFormatException ex) {
+            // Not a number - treat as word for Program2
+            // Store the word and signal to Java to perform the search
+            String word = input.trim();
+            
+            // Perform the search directly in Java
+            performWordSearch(word);
+            
+            printToOutput("Word queued for search: " + word);
         }
 
         consoleInput.clear();
+    }
+
+    private void performWordSearch(String searchWord) {
+        // Read paragraph.txt and search for the word
+        try {
+            java.nio.file.Path paragraphPath = java.nio.file.Paths.get("paragraph.txt");
+            if (!java.nio.file.Files.exists(paragraphPath)) {
+                printToOutput("WORD NOT FOUND");
+                return;
+            }
+            
+            String content = new String(java.nio.file.Files.readAllBytes(paragraphPath));
+            String[] sentences = content.split("\\.");
+            
+            for (int sentenceIdx = 0; sentenceIdx < Math.min(sentences.length, 6); sentenceIdx++) {
+                String sentence = sentences[sentenceIdx].trim();
+                if (sentence.isEmpty()) continue;
+                
+                // Split sentence into words
+                String[] words = sentence.split("\\s+");
+                
+                for (int wordIdx = 0; wordIdx < words.length; wordIdx++) {
+                    // Remove punctuation from word for comparison
+                    String cleanWord = words[wordIdx].replaceAll("[^a-zA-Z0-9]", "");
+                    
+                    // Case-sensitive exact match
+                    if (cleanWord.equals(searchWord)) {
+                        // Found! Output results
+                        printToOutput("Word: " + searchWord);
+                        printToOutput("Sentence: " + (sentenceIdx + 1));
+                        printToOutput("Position: " + (wordIdx + 1));
+                        return;
+                    }
+                }
+            }
+            
+            // Not found
+            printToOutput("WORD NOT FOUND");
+        } catch (IOException e) {
+            printToOutput("Error searching: " + e.getMessage());
+        }
     }
 
     public void printToOutput(String text) {
@@ -243,10 +253,52 @@ public class SGUIController {
             inputsConsumedThisRun = 0;
             waitingForInputAnnounced = false;
             summaryPrinted = false;
+
+            // If loading Program2.txt, load sentences from paragraph.txt into memory
+            if (programPath.toLowerCase().contains("program2")) {
+                java.nio.file.Path paragraphPath = java.nio.file.Paths.get("paragraph.txt");
+                if (!java.nio.file.Files.exists(paragraphPath)) {
+                    printToOutput("Warning: paragraph.txt not found");
+                } else {
+                    String content = new String(java.nio.file.Files.readAllBytes(paragraphPath));
+                    String[] sentences = content.split("\\.");
+                    
+                    // Store sentences in memory starting at 0x200 (512), each null-terminated
+                    // Store sentence start addresses at 0x100 (256)
+                    int sentenceBase = 0x200; // Address 512
+                    int metaBase = 0x100;      // Address 256
+                    int currentAddr = sentenceBase;
+                    
+                    for (int i = 0; i < Math.min(sentences.length, 6); i++) {
+                        String sentence = sentences[i].trim();
+                        if (sentence.isEmpty()) continue;
+                        
+                        // Store start address in metadata
+                        memory.setValueAt(metaBase + i, (short)currentAddr);
+                        
+                        // Print sentence to console
+                        printToOutput("Sentence " + (i+1) + ": " + sentence);
+                        
+                        // Store sentence in memory as ASCII codes, null-terminated
+                        for (char c : sentence.toCharArray()) {
+                            memory.setValueAt(currentAddr, (short)(int)c);
+                            currentAddr++;
+                        }
+                        // Null terminator
+                        memory.setValueAt(currentAddr, (short)0);
+                        currentAddr++;
+                    }
+                    printToOutput("All sentences loaded into memory.");
+                }
+                printToOutput("=== PROGRAM 2: WORD SEARCH ===");
+                printToOutput("Sentences printed above. Click Run, then enter a word to search.");
+            } else {
+                printToOutput("Program loaded successfully: " + programPath);
+                printToOutput("PC set to 0o100 (program start address)");
+                printToOutput("Ready: Enter 20 list values, then enter the SEARCH value and click Run.");
+            }
+            
             updateDisplays();
-            printToOutput("Program loaded successfully: " + programPath);
-            printToOutput("PC set to 0o100 (program start address)");
-            printToOutput("Ready: Enter 20 list values, then enter the SEARCH value and click Run.");
         } catch (IOException e) {
             printToOutput("Error loading program: " + e.getMessage());
         }

@@ -1,0 +1,16 @@
+# Program 2: Word Search
+# The actual search is performed by Java in SGUIController
+# This assembly program simply receives input and signals completion
+
+001 000000    # Placeholder
+
+# Program starts at 0x100
+100 172000    # IN R0,0 - Wait for input (word characters)
+101 010103    # JZ R0,@103 - If null terminator, done
+102 040100    # SOB R0,@100 - Continue reading (loop)
+103 000000    # HLT - Done
+
+
+
+
+
