@@ -110,7 +110,7 @@ java --module-path $PATH_TO_FX --add-modules javafx.controls,javafx.fxml --add-o
 ## Basic Operations
 
 ### 1. Loading a Program
-1. Enter program filename in "Program File" field (e.g., `Program1.txt`)
+1. Enter program filename in "Program File" field (e.g., `Program2.txt`)
 2. Click **IPL** button
 3. Check "Printer Output" for success message
 4. PC will be set to 100 (octal) automatically
@@ -232,7 +232,7 @@ You can edit the PC field directly:
 
 ### Problem: "Program file not found"
 **Solution**: 
-- Ensure `Program1.txt` is in the same directory as the simulator
+- Ensure `Program2.txt` is in the same directory as the simulator
 - Check filename spelling (case-sensitive on Linux/Mac)
 - Verify file encoding is ASCII (not UTF-16)
 
