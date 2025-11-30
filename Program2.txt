@@ -1,16 +1,47 @@
-# Program 2: Word Search
-# The actual search is performed by Java in SGUIController
-# This assembly program simply receives input and signals completion
-
-001 000000    # Placeholder
-
-# Program starts at 0x100
-100 172000    # IN R0,0 - Wait for input (word characters)
-101 010103    # JZ R0,@103 - If null terminator, done
-102 040100    # SOB R0,@100 - Continue reading (loop)
-103 000000    # HLT - Done
-
-
-
-
-
+001 000006    # NUM_SENT = 6
+002 000400    # META_BASE = 0o400
+003 001000    # SENT_BASE = 0o1000
+004 000000    # SENT_IDX = 0
+005 000000    # WORD_IDX = 0
+006 000000    # FOUND_SENT = 0
+007 000000    # FOUND_POS = 0
+012 000000    # SEARCH_WORD
+013 000000    # CURR_SENT_ADDR
+014 000000    # CURR_CHAR
+017 000100    # ADDR_READ_WORD
+020 000104    # ADDR_SENT_LOOP = 104
+021 000121    # ADDR_WORD_LOOP = 121
+024 000140    # ADDR_NOT_FOUND = 140
+100 172000    # IN R0,0 ; read word char
+101 004012    # STR R0,10 ; store char
+102 024060    # JZ R0,@ADDR_SENT_LOOP ; if null, done
+103 032057    # JMA @ADDR_READ_WORD ; loop
+104 002401    # LDR R1,1 ; NUM_SENT
+105 003002    # LDR R2,2 ; META_BASE
+106 004404    # STR R1,4 ; init SENT_IDX
+107 002404    # LDR R1,4 ; SENT_IDX
+110 016401    # SIR R1,1 ; decrement
+111 004404    # STR R1,4 ; save
+112 024464    # JZ R1,@ADDR_NOT_FOUND ; if all done, not found
+113 002404    # LDR R1,4 ; SENT_IDX
+114 003002    # LDR R2,2 ; META_BASE
+115 015000    # AIR R2,0 ; add offset (simplified)
+116 003002    # LDR R2,(2) ; load sent addr
+117 005013    # STR R2,11 ; CURR_SENT_ADDR
+120 004005    # STR R0,5 ; WORD_IDX = 0
+121 003013    # LDR R2,11 ; CURR_SENT_ADDR
+122 003042    # LDR R1,(R2) ; load char
+123 004414    # STR R1,12 ; CURR_CHAR
+124 024460    # JZ R1,@ADDR_SENT_LOOP ; if null, next sent
+125 002414    # LDR R1,12 ; CURR_CHAR
+126 003412    # LDR R3,10 ; SEARCH_WORD
+127 054700    # TRR R1,R3 ; compare
+130 026061    # JNE R0,@ADDR_WORD_LOOP ; if not equal, next
+131 002012    # LDR R0,10 ; search word
+132 174001    # OUT R0,1 ; print word
+133 002004    # LDR R0,4 ; SENT_IDX
+134 174001    # OUT R0,1 ; print sentence
+135 002005    # LDR R0,5 ; WORD_IDX
+136 174001    # OUT R0,1 ; print position
+137 000000    # HLT
+140 000000    # HLT ; word not found
