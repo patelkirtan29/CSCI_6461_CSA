@@ -128,12 +128,12 @@ public class GenProgram2 {
         items.add(new Item(ADDR_SPACE_HANDLER, 0, "ADDR_SPACE_HANDLER"));
         int PAR_BASE = 0500; // matches cell 2
         int a = PAR_BASE;
-        a = emitString(items, a, "THIS IS SENTENCE ONE.",    "PAR");
-        a = emitString(items, a, " THIS IS SENTENCE TWO.",   "PAR");
-        a = emitString(items, a, " THIS IS SENTENCE THREE.", "PAR");
-        a = emitString(items, a, " THIS IS SENTENCE FOUR.",  "PAR");
-        a = emitString(items, a, " THIS IS SENTENCE FIVE.",  "PAR");
-        a = emitString(items, a, " THIS IS SENTENCE SIX.",   "PAR");
+        a = emitString(items, a, "MY NAME IS SIMULATOR.",    "PAR");
+        a = emitString(items, a, " MY PURPOSE IS TO SIMULATE COMPUTER.",   "PAR");
+        a = emitString(items, a, " SIMULATE I MUST.", "PAR");
+        a = emitString(items, a, " FOR IT IS PURPOSE OF MINE.",  "PAR");
+        a = emitString(items, a, " NOT A MATRIX SIMULATOR.",  "PAR");
+        a = emitString(items, a, " BUT COMPUTOR SIMULATOR.",   "PAR");
         items.add(new Item(a, 0, "PAR_END (0 terminator)"));
         a++;
         int CODE_BASE = 0100;

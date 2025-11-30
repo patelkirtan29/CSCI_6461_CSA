@@ -38,7 +38,18 @@ This repo includes a Windows batch script configured for your JavaFX SDK path.
 .\run_simulator.bat
 ```
 
-You should see the GUI launch. The Program File field is prefilled with `Program1.txt` and is automatically loaded.
+You should see the GUI launch. The Program File field is prefilled with `Program2.txt` and is automatically loaded.
+
+### Program 2 demo
+
+Program2 demonstrates word searching in a paragraph:
+- Prints 6 sentences seperated by dot, each word is seperated by space
+- Ask the user for a word
+- Searches the paragraph to see if it contains the word
+- Prints out the first word: the sentence number, and the word number in the sentence
+
+Notes:
+- The word search is case sensitive
 
 ### Program 1 demo
 
