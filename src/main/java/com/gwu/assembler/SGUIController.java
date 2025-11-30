@@ -23,6 +23,7 @@ public class SGUIController {
     private boolean waitingForInputAnnounced = false;
     // Print a labeled summary once per run when CPU halts
     private boolean summaryPrinted = false;
+    private boolean program2Mode = false;
 
     @FXML private TextField gpr0, gpr1, gpr2, gpr3;
     @FXML private TextField ixr1, ixr2, ixr3;
@@ -134,7 +135,12 @@ public class SGUIController {
                 consoleInputQueue.addLast(value);
                 added++;
             } catch (NumberFormatException ex) {
-                skippedInvalid++;
+                for (char ch : t.toCharArray()) {
+                    consoleInputQueue.addLast((int) ch);
+                    added++;
+                }
+                consoleInputQueue.addLast(0);
+                added++;
             }
         }
 
@@ -164,8 +170,14 @@ public class SGUIController {
 
     public void printToOutput(String text) {
         if (Platform.isFxApplicationThread()) {
-            printerOutput.appendText(text + "\n");
-            printerBuffer.append(text).append("\n");
+            if (text.startsWith("[RAW]")) {
+                printerOutput.appendText(text.substring(5));
+                printerBuffer.append(text.substring(5));
+            }
+            else {
+                printerOutput.appendText(text + "\n");
+                printerBuffer.append(text).append("\n");
+            }
         } else {
             Platform.runLater(() -> printToOutput(text));
         }
@@ -180,17 +192,21 @@ public class SGUIController {
         }
         
         // Check if we've already consumed all expected inputs for Program1
-        if (inputsConsumedThisRun >= 21) {
+        if (inputsConsumedThisRun >= 21 && !program2Mode) {
             // All inputs consumed, don't ask for more
             // This prevents "Waiting for input #22" message
             return -1;  // Signal CPU to retry (program should be done by now)
         }
         
         // No input available: announce once per wait state
-        if (!waitingForInputAnnounced) {
+        if (!waitingForInputAnnounced && !program2Mode) {
             int nextIdx = inputsConsumedThisRun + 1;
             printToOutput(String.format("Waiting for input #%d (enter 21 values: 20 list + 1 search)", nextIdx));
             waitingForInputAnnounced = true;
+        }
+        else if (!waitingForInputAnnounced) {
+            waitingForInputAnnounced = true;
+            printToOutput(String.format("\nWaiting for input"));
         }
         return -1;  // Signal CPU to retry
     }
@@ -208,7 +224,12 @@ public class SGUIController {
         if (cpu.isHalted()) {
             cpu.reset();
             cpu.setPC(64); // 0o100
-            printToOutput("Restarting program from 0o100. Enter 21 inputs if not already queued, then wait for output.");
+            if (!program2Mode) {
+                printToOutput("Restarting program from 0o100. Enter 21 inputs if not already queued, then wait for output.");
+            }
+            else {
+                printToOutput("Restarting program from 0o100.");
+            }
         }
         cpu.unhalt(); // Ensure CPU is not halted before running
         cpu.run(() -> {
@@ -232,6 +253,11 @@ public class SGUIController {
             printToOutput("No program file specified");
             return;
         }
+        if (programPath.contains("Program2") || programPath.contains("program2")) {
+            program2Mode = true;
+        } else {
+            program2Mode = false;
+        }
 
         try {
             memory.reset(); // Clear memory before loading new program
@@ -246,7 +272,9 @@ public class SGUIController {
             updateDisplays();
             printToOutput("Program loaded successfully: " + programPath);
             printToOutput("PC set to 0o100 (program start address)");
-            printToOutput("Ready: Enter 20 list values, then enter the SEARCH value and click Run.");
+            if (!program2Mode) {
+                printToOutput("Ready: Enter 20 list values, then enter the SEARCH value and click Run.");
+            }
         } catch (IOException e) {
             printToOutput("Error loading program: " + e.getMessage());
         }
@@ -283,7 +311,7 @@ public class SGUIController {
         updateCacheDisplay();
 
         // When the program halts, append a clear, labeled summary using the last two numeric OUTs
-        if (cpu.isHalted() && !summaryPrinted) {
+        if (cpu.isHalted() && !summaryPrinted && !program2Mode) {
             try {
                 // Find the last two numeric lines printed by the program (OUT outputs)
                 String[] lines = printerBuffer.toString().split("\n");

@@ -142,7 +142,7 @@
             <!-- Program File -->
             <VBox spacing="5">
                 <Label text="Program File:" styleClass="section-label" />
-                <TextField fx:id="programFile" prefWidth="300" text="Program1.txt" />
+                <TextField fx:id="programFile" prefWidth="300" text="Program2.txt" />
             </VBox>
         </VBox>
 

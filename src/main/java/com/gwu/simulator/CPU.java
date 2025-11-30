@@ -39,7 +39,7 @@ public class CPU {
                 step();
                 updateDisplay.run();
                 try {
-                    Thread.sleep(100); // Faster execution - 100ms per instruction
+                    Thread.sleep(4); // Faster execution - 4ms per instruction
                 } catch (InterruptedException e) {
                     break;
                 }
@@ -480,6 +480,14 @@ public class CPU {
                         setGPR(r, input);
                     }
                 }
+                else if (devid == 3 && consoleInputSupplier != null) {
+                    int input = consoleInputSupplier.get();
+                    if (input == -1) {
+                        setPC(PC - 1);   // wait for character
+                    } else {
+                        setGPR(r, input & 0xFF);
+                    }
+                }
                 break;
                 
             case 62: // OUT
@@ -497,6 +505,11 @@ public class CPU {
                         text = String.valueOf(value);
                     }
                     printerConsumer.accept(text);
+                }
+                else if (devid == 2 && printerConsumer != null) { 
+                    int value = getGPR(r);
+                    char ch = (char)(value & 0xFF);
+                    printerConsumer.accept("[RAW]" + ch);
                 }
                 break;
         }
